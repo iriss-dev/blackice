@@ -3,27 +3,32 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>BLACKICE // Sentinel Cockpit</title>
+  <title>BLACKICE // Sentinel Threat Defense Cockpit</title>
   <style>
     :root {
-      --bg: #07080c;
-      --panel: #0d0f17;
-      --panel-border: #1a1e2d;
-      --panel-hover: #131724;
+      --bg: #06070a;
+      --panel-bg: rgba(11, 14, 22, 0.78);
+      --panel-border: rgba(0, 240, 255, 0.16);
+      --panel-border-bright: rgba(0, 240, 255, 0.45);
+      --panel-hover: rgba(16, 22, 36, 0.9);
       --cyan: #00f0ff;
-      --cyan-glow: rgba(0, 240, 255, 0.18);
+      --cyan-bright: #70f8ff;
+      --cyan-glow: rgba(0, 240, 255, 0.28);
       --crimson: #ff0055;
-      --crimson-glow: rgba(255, 0, 85, 0.22);
+      --crimson-bright: #ff3377;
+      --crimson-glow: rgba(255, 0, 85, 0.3);
       --green: #00ff88;
-      --green-glow: rgba(0, 255, 136, 0.2);
-      --amber: #ffb700;
-      --text: #e1e7f0;
-      --text-muted: #6b768d;
+      --green-glow: rgba(0, 255, 136, 0.28);
+      --amber: #ffaa00;
+      --purple: #a855f7;
+      --text: #e2e8f0;
+      --text-muted: #728096;
       --mono: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
-      --sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      --sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
+
     body {
       background-color: var(--bg);
       color: var(--text);
@@ -32,72 +37,159 @@
       display: flex;
       flex-direction: column;
       overflow-x: hidden;
+      position: relative;
+    }
+
+    /* CYBER-MOUNTAIN BACKGROUND SCENE */
+    .mountain-bg {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      pointer-events: none;
+      z-index: 0;
+      overflow: hidden;
+    }
+
+    .sky-gradient {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: radial-gradient(circle at 50% 15%, rgba(0, 240, 255, 0.08) 0%, rgba(13, 10, 26, 0.85) 45%, #050609 85%);
+    }
+
+    .stars {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 60%;
       background-image: 
-        radial-gradient(circle at 50% 0%, rgba(0, 240, 255, 0.04) 0%, transparent 60%),
-        linear-gradient(rgba(26, 30, 45, 0.15) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(26, 30, 45, 0.15) 1px, transparent 1px);
-      background-size: 100% 100%, 32px 32px, 32px 32px;
+        radial-gradient(1px 1px at 15% 15%, #fff 100%, transparent),
+        radial-gradient(1.5px 1.5px at 35% 25%, var(--cyan) 100%, transparent),
+        radial-gradient(1px 1px at 60% 10%, #fff 100%, transparent),
+        radial-gradient(1px 1px at 80% 30%, #fff 100%, transparent),
+        radial-gradient(1.5px 1.5px at 90% 18%, var(--cyan) 100%, transparent),
+        radial-gradient(1px 1px at 45% 40%, rgba(255,255,255,0.7) 100%, transparent);
+      background-size: 300px 300px;
+      opacity: 0.7;
+    }
+
+    .mountains-svg {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 520px;
+      object-fit: cover;
+      opacity: 0.85;
+    }
+
+    .horizon-grid {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 180px;
+      background: 
+        linear-gradient(to top, rgba(5, 6, 9, 0.95) 0%, transparent 100%),
+        linear-gradient(rgba(0, 240, 255, 0.1) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 240, 255, 0.1) 1px, transparent 1px);
+      background-size: 100% 100%, 40px 40px, 40px 40px;
+      transform: perspective(300px) rotateX(45deg);
+      transform-origin: bottom center;
+      opacity: 0.35;
     }
 
     header {
-      padding: 18px 32px;
+      padding: 16px 36px;
       display: flex;
       justify-content: space-between;
       align-items: center;
       border-bottom: 1px solid var(--panel-border);
-      background: rgba(13, 15, 23, 0.85);
-      backdrop-filter: blur(12px);
+      background: rgba(7, 9, 15, 0.82);
+      backdrop-filter: blur(20px);
       position: sticky;
       top: 0;
       z-index: 100;
+      box-shadow: 0 4px 24px rgba(0, 0, 0, 0.6);
     }
 
     .brand {
       display: flex;
       align-items: center;
-      gap: 14px;
+      gap: 16px;
     }
 
-    .brand-logo {
-      width: 32px;
-      height: 32px;
-      border: 2px solid var(--cyan);
-      box-shadow: 0 0 12px var(--cyan-glow);
+    .brand-logo-wrap {
+      position: relative;
+      width: 44px;
+      height: 44px;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-family: var(--mono);
-      font-weight: 900;
-      font-size: 14px;
-      color: var(--cyan);
-      background: rgba(0, 240, 255, 0.05);
-      clip-path: polygon(25% 0%, 100% 0%, 75% 100%, 0% 100%);
+    }
+
+    .snowflake-svg {
+      width: 100%;
+      height: 100%;
+      filter: drop-shadow(0 0 10px var(--cyan-glow));
+      animation: slow-spin 40s linear infinite;
+    }
+
+    @keyframes slow-spin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
     }
 
     .brand-title {
       font-family: var(--mono);
-      font-size: 18px;
+      font-size: 20px;
       font-weight: 800;
-      letter-spacing: 2px;
+      letter-spacing: 3px;
       color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 10px;
     }
 
-    .brand-title span { color: var(--cyan); }
+    .brand-title span {
+      color: var(--cyan);
+      text-shadow: 0 0 14px var(--cyan-glow);
+    }
+
     .brand-badge {
       font-size: 10px;
       font-family: var(--mono);
-      padding: 2px 8px;
-      background: rgba(0, 255, 136, 0.1);
-      color: var(--green);
-      border: 1px solid rgba(0, 255, 136, 0.3);
-      border-radius: 2px;
+      padding: 3px 9px;
+      background: rgba(0, 240, 255, 0.12);
+      color: var(--cyan);
+      border: 1px solid var(--panel-border-bright);
+      border-radius: 3px;
       letter-spacing: 1px;
+    }
+
+    .crypto-badge {
+      font-size: 10px;
+      font-family: var(--mono);
+      padding: 3px 9px;
+      background: rgba(168, 85, 247, 0.14);
+      color: var(--purple);
+      border: 1px solid rgba(168, 85, 247, 0.35);
+      border-radius: 3px;
+      letter-spacing: 1px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
     }
 
     .header-status {
       display: flex;
       align-items: center;
-      gap: 20px;
+      gap: 24px;
       font-family: var(--mono);
       font-size: 12px;
     }
@@ -108,92 +200,108 @@
       height: 8px;
       border-radius: 50%;
       background: var(--green);
-      box-shadow: 0 0 8px var(--green);
-      animation: blink 2s infinite ease-in-out;
+      box-shadow: 0 0 10px var(--green);
+      animation: pulse-glow 2s infinite ease-in-out;
     }
 
-    @keyframes blink {
+    @keyframes pulse-glow {
       0%, 100% { opacity: 1; transform: scale(1); }
-      50% { opacity: 0.4; transform: scale(0.85); }
+      50% { opacity: 0.35; transform: scale(0.8); }
     }
 
     main {
-      padding: 28px 32px;
+      padding: 32px 36px;
       max-width: 1440px;
       margin: 0 auto;
       width: 100%;
       display: flex;
       flex-direction: column;
       gap: 24px;
+      position: relative;
+      z-index: 10;
       flex: 1;
     }
 
-    /* STATS CARDS */
     .stats-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-      gap: 16px;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 18px;
     }
 
     .stat-card {
-      background: var(--panel);
+      background: var(--panel-bg);
+      backdrop-filter: blur(18px);
       border: 1px solid var(--panel-border);
-      border-radius: 4px;
-      padding: 18px 20px;
+      border-radius: 6px;
+      padding: 20px 24px;
       display: flex;
       flex-direction: column;
       gap: 8px;
       position: relative;
       overflow: hidden;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+      transition: transform 0.2s, border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .stat-card:hover {
+      transform: translateY(-2px);
+      border-color: var(--panel-border-bright);
+      box-shadow: 0 12px 30px rgba(0, 240, 255, 0.12);
     }
 
     .stat-card::before {
       content: '';
       position: absolute;
-      top: 0; left: 0; width: 3px; height: 100%;
+      top: 0; left: 0; width: 4px; height: 100%;
       background: var(--cyan);
+      box-shadow: 0 0 10px var(--cyan);
     }
-    .stat-card.crimson::before { background: var(--crimson); }
-    .stat-card.green::before { background: var(--green); }
-    .stat-card.amber::before { background: var(--amber); }
+    .stat-card.crimson::before { background: var(--crimson); box-shadow: 0 0 10px var(--crimson); }
+    .stat-card.green::before { background: var(--green); box-shadow: 0 0 10px var(--green); }
+    .stat-card.purple::before { background: var(--purple); box-shadow: 0 0 10px var(--purple); }
 
     .stat-label {
       font-size: 11px;
       font-family: var(--mono);
       text-transform: uppercase;
-      letter-spacing: 1.5px;
+      letter-spacing: 2px;
       color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      gap: 6px;
     }
 
     .stat-value {
-      font-size: 26px;
+      font-size: 28px;
       font-family: var(--mono);
       font-weight: 800;
       color: #fff;
+      letter-spacing: 1px;
     }
 
-    /* MAIN CONTENT 2-COL */
     .content-grid {
       display: grid;
-      grid-template-columns: 1fr 1fr;
+      grid-template-columns: 1.15fr 0.85fr;
       gap: 24px;
     }
 
-    @media (max-width: 1000px) {
+    @media (max-width: 1100px) {
       .content-grid { grid-template-columns: 1fr; }
     }
 
     .panel {
-      background: var(--panel);
+      background: var(--panel-bg);
+      backdrop-filter: blur(20px);
       border: 1px solid var(--panel-border);
-      border-radius: 4px;
+      border-radius: 6px;
       display: flex;
       flex-direction: column;
       overflow: hidden;
+      box-shadow: 0 10px 32px rgba(0, 0, 0, 0.5);
     }
 
     .panel-header {
-      padding: 14px 20px;
+      padding: 16px 24px;
       border-bottom: 1px solid var(--panel-border);
       display: flex;
       justify-content: space-between;
@@ -204,65 +312,73 @@
     .panel-title {
       font-family: var(--mono);
       font-size: 13px;
-      font-weight: 700;
-      letter-spacing: 1px;
+      font-weight: 800;
+      letter-spacing: 1.5px;
       text-transform: uppercase;
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 10px;
     }
 
-    .panel-title span { color: var(--cyan); }
+    .panel-title span {
+      color: var(--cyan);
+      text-shadow: 0 0 8px var(--cyan-glow);
+    }
 
-    /* SEARCH / INSPECTOR */
     .search-box {
-      padding: 20px;
+      padding: 22px 24px;
       display: flex;
-      gap: 12px;
+      gap: 14px;
       border-bottom: 1px solid var(--panel-border);
+      background: rgba(0, 0, 0, 0.25);
     }
 
     .search-input {
       flex: 1;
-      background: #06070a;
+      background: rgba(6, 8, 14, 0.9);
       border: 1px solid var(--panel-border);
       color: #fff;
       font-family: var(--mono);
       font-size: 14px;
-      padding: 10px 14px;
-      border-radius: 3px;
+      padding: 12px 18px;
+      border-radius: 4px;
       outline: none;
-      transition: border-color 0.2s, box-shadow 0.2s;
+      transition: all 0.2s;
     }
 
     .search-input:focus {
       border-color: var(--cyan);
-      box-shadow: 0 0 10px var(--cyan-glow);
+      box-shadow: 0 0 14px var(--cyan-glow);
+      background: rgba(8, 12, 20, 0.95);
     }
 
     .btn {
-      background: rgba(0, 240, 255, 0.1);
+      background: rgba(0, 240, 255, 0.12);
       border: 1px solid var(--cyan);
       color: var(--cyan);
       font-family: var(--mono);
       font-size: 12px;
-      font-weight: 700;
-      padding: 0 18px;
+      font-weight: 800;
+      padding: 0 22px;
       cursor: pointer;
-      border-radius: 3px;
+      border-radius: 4px;
       transition: all 0.2s;
       letter-spacing: 1px;
       text-transform: uppercase;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
     }
 
     .btn:hover {
       background: var(--cyan);
-      color: #000;
-      box-shadow: 0 0 14px var(--cyan-glow);
+      color: #050608;
+      box-shadow: 0 0 20px var(--cyan-glow);
     }
 
     .btn-danger {
-      background: rgba(255, 0, 85, 0.1);
+      background: rgba(255, 0, 85, 0.12);
       border-color: var(--crimson);
       color: var(--crimson);
     }
@@ -270,135 +386,173 @@
     .btn-danger:hover {
       background: var(--crimson);
       color: #fff;
-      box-shadow: 0 0 14px var(--crimson-glow);
+      box-shadow: 0 0 20px var(--crimson-glow);
     }
 
     .btn-sm {
-      padding: 4px 10px;
+      padding: 6px 14px;
       font-size: 11px;
     }
 
     .verdict-card {
-      padding: 24px;
+      padding: 26px;
       display: flex;
       flex-direction: column;
-      gap: 16px;
+      gap: 20px;
     }
 
     .gauge-container {
       display: flex;
       align-items: center;
-      gap: 24px;
-      background: rgba(0, 0, 0, 0.2);
-      padding: 20px;
-      border-radius: 4px;
+      gap: 28px;
+      background: rgba(0, 0, 0, 0.35);
+      padding: 24px 28px;
+      border-radius: 6px;
       border: 1px solid var(--panel-border);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .gauge-container::after {
+      content: '';
+      position: absolute;
+      top: 0; right: 0; width: 140px; height: 100%;
+      background: radial-gradient(circle at center, rgba(0, 240, 255, 0.05) 0%, transparent 70%);
+      pointer-events: none;
     }
 
     .score-circle {
-      width: 80px;
-      height: 80px;
+      width: 90px;
+      height: 90px;
       border-radius: 50%;
-      border: 4px solid var(--panel-border);
+      border: 5px solid var(--panel-border);
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
       font-family: var(--mono);
       position: relative;
+      background: rgba(0, 0, 0, 0.5);
+      flex-shrink: 0;
     }
 
-    .score-circle.clean { border-color: var(--green); color: var(--green); box-shadow: 0 0 16px var(--green-glow); }
-    .score-circle.threat { border-color: var(--crimson); color: var(--crimson); box-shadow: 0 0 16px var(--crimson-glow); }
-    .score-circle.suspicious { border-color: var(--amber); color: var(--amber); }
+    .score-circle.clean {
+      border-color: var(--green);
+      color: var(--green);
+      box-shadow: 0 0 20px var(--green-glow);
+    }
 
-    .score-val { font-size: 24px; font-weight: 900; }
-    .score-sub { font-size: 9px; opacity: 0.7; }
+    .score-circle.threat {
+      border-color: var(--crimson);
+      color: var(--crimson);
+      box-shadow: 0 0 22px var(--crimson-glow);
+    }
+
+    .score-circle.suspicious {
+      border-color: var(--amber);
+      color: var(--amber);
+      box-shadow: 0 0 16px rgba(255, 170, 0, 0.25);
+    }
+
+    .score-val { font-size: 28px; font-weight: 900; }
+    .score-sub { font-size: 9px; letter-spacing: 1px; opacity: 0.8; }
 
     .verdict-details {
       flex: 1;
       display: flex;
       flex-direction: column;
-      gap: 6px;
+      gap: 8px;
     }
 
     .verdict-ip {
       font-family: var(--mono);
-      font-size: 18px;
-      font-weight: 700;
+      font-size: 20px;
+      font-weight: 800;
       color: #fff;
+      letter-spacing: 1px;
     }
 
     .verdict-badges {
       display: flex;
       flex-wrap: wrap;
-      gap: 8px;
+      gap: 10px;
     }
 
     .badge {
       font-size: 11px;
       font-family: var(--mono);
-      padding: 2px 8px;
-      border-radius: 2px;
-      letter-spacing: 0.5px;
+      padding: 3px 10px;
+      border-radius: 3px;
+      letter-spacing: 1px;
+      font-weight: 700;
       text-transform: uppercase;
     }
 
-    .badge-clean { background: rgba(0, 255, 136, 0.15); color: var(--green); border: 1px solid var(--green); }
-    .badge-drop { background: rgba(255, 0, 85, 0.15); color: var(--crimson); border: 1px solid var(--crimson); }
-    .badge-tor { background: rgba(180, 80, 255, 0.15); color: #c084fc; border: 1px solid #c084fc; }
-    .badge-botnet { background: rgba(255, 0, 85, 0.25); color: #fff; border: 1px solid var(--crimson); }
+    .badge-clean { background: rgba(0, 255, 136, 0.14); color: var(--green); border: 1px solid var(--green); }
+    .badge-drop { background: rgba(255, 0, 85, 0.16); color: var(--crimson); border: 1px solid var(--crimson); }
+    .badge-tor { background: rgba(168, 85, 247, 0.16); color: var(--purple); border: 1px solid var(--purple); }
+    .badge-botnet { background: rgba(255, 0, 85, 0.3); color: #fff; border: 1px solid var(--crimson); }
 
     .feed-match-list {
       list-style: none;
       display: flex;
       flex-direction: column;
-      gap: 8px;
+      gap: 10px;
     }
 
     .feed-match-item {
       font-family: var(--mono);
       font-size: 12px;
-      background: #07080c;
-      padding: 10px 14px;
-      border-left: 2px solid var(--cyan);
+      background: rgba(5, 7, 12, 0.7);
+      padding: 12px 16px;
+      border-left: 3px solid var(--cyan);
+      border-radius: 0 4px 4px 0;
       display: flex;
       justify-content: space-between;
       align-items: center;
+      border-top: 1px solid rgba(255, 255, 255, 0.03);
+      border-right: 1px solid rgba(255, 255, 255, 0.03);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.03);
     }
 
-    /* TERMINAL LOG STREAM */
     .terminal-body {
-      background: #040508;
-      padding: 16px;
+      background: rgba(4, 5, 8, 0.92);
+      padding: 18px;
       font-family: var(--mono);
       font-size: 12px;
       line-height: 1.6;
-      height: 380px;
+      height: 420px;
       overflow-y: auto;
       display: flex;
       flex-direction: column-reverse;
-      gap: 6px;
+      gap: 8px;
+      border-bottom: 1px solid var(--panel-border);
     }
 
     .log-line {
       display: flex;
       gap: 12px;
-      padding: 4px 6px;
-      border-radius: 2px;
+      padding: 6px 10px;
+      border-radius: 3px;
+      background: rgba(255, 255, 255, 0.015);
+      border-left: 2px solid transparent;
+      transition: background 0.15s;
     }
 
-    .log-line:hover { background: rgba(255, 255, 255, 0.03); }
-    .log-time { color: var(--text-muted); min-width: 75px; }
-    .log-event { font-weight: 700; min-width: 110px; }
+    .log-line:hover {
+      background: rgba(255, 255, 255, 0.04);
+      border-left-color: var(--cyan);
+    }
+
+    .log-time { color: var(--text-muted); min-width: 80px; }
+    .log-event { font-weight: 800; min-width: 100px; }
     .log-event.BAN { color: var(--crimson); }
     .log-event.DROP { color: var(--crimson); }
     .log-event.INSPECT { color: var(--cyan); }
     .log-event.CLEAN { color: var(--green); }
-    .log-ip { color: #fff; min-width: 130px; }
-    .log-msg { color: #8e99ac; flex: 1; }
+    .log-ip { color: #fff; min-width: 135px; font-weight: 700; }
+    .log-msg { color: #8e9bb0; flex: 1; }
 
-    /* BANS TABLE */
     .bans-table {
       width: 100%;
       border-collapse: collapse;
@@ -408,23 +562,23 @@
     }
 
     .bans-table th {
-      padding: 12px 16px;
+      padding: 14px 20px;
       background: rgba(255, 255, 255, 0.02);
       color: var(--text-muted);
       border-bottom: 1px solid var(--panel-border);
-      font-weight: 600;
-      letter-spacing: 1px;
+      font-weight: 700;
+      letter-spacing: 1.5px;
     }
 
     .bans-table td {
-      padding: 12px 16px;
+      padding: 14px 20px;
       border-bottom: 1px solid var(--panel-border);
     }
 
     .bans-table tr:hover { background: var(--panel-hover); }
 
     footer {
-      padding: 18px 32px;
+      padding: 22px 36px;
       border-top: 1px solid var(--panel-border);
       display: flex;
       justify-content: space-between;
@@ -432,16 +586,78 @@
       font-family: var(--mono);
       font-size: 11px;
       color: var(--text-muted);
+      background: rgba(5, 6, 9, 0.85);
+      position: relative;
+      z-index: 10;
     }
   </style>
 </head>
 <body>
+  <div class="mountain-bg">
+    <div class="sky-gradient"></div>
+    <div class="stars"></div>
+    <svg class="mountains-svg" viewBox="0 0 1440 520" fill="none" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="mountDistant" x1="50%" y1="0%" x2="50%" y2="100%">
+          <stop offset="0%" stop-color="#0a1224" stop-opacity="0.8"/>
+          <stop offset="100%" stop-color="#05060a" stop-opacity="0.95"/>
+        </linearGradient>
+        <linearGradient id="mountMid" x1="50%" y1="0%" x2="50%" y2="100%">
+          <stop offset="0%" stop-color="#08182b" stop-opacity="0.9"/>
+          <stop offset="100%" stop-color="#040508" stop-opacity="0.98"/>
+        </linearGradient>
+        <linearGradient id="mountFore" x1="50%" y1="0%" x2="50%" y2="100%">
+          <stop offset="0%" stop-color="#061e33" stop-opacity="0.95"/>
+          <stop offset="100%" stop-color="#030406" stop-opacity="1"/>
+        </linearGradient>
+        <linearGradient id="cyanStroke" x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%" stop-color="#00f0ff" stop-opacity="0.1"/>
+          <stop offset="50%" stop-color="#00f0ff" stop-opacity="0.65"/>
+          <stop offset="100%" stop-color="#a855f7" stop-opacity="0.3"/>
+        </linearGradient>
+      </defs>
+      <path d="M0,320 L160,180 L320,290 L480,120 L680,270 L840,160 L1020,300 L1200,140 L1360,260 L1440,210 L1440,520 L0,520 Z" fill="url(#mountDistant)"/>
+      <path d="M0,320 L160,180 L320,290 L480,120 L680,270 L840,160 L1020,300 L1200,140 L1360,260 L1440,210" stroke="url(#cyanStroke)" stroke-width="1.5" fill="none"/>
+      <path d="M0,380 L120,240 L260,340 L420,190 L580,310 L760,150 L940,320 L1100,210 L1280,350 L1440,260 L1440,520 L0,520 Z" fill="url(#mountMid)"/>
+      <path d="M0,380 L120,240 L260,340 L420,190 L580,310 L760,150 L940,320 L1100,210 L1280,350 L1440,260" stroke="#00f0ff" stroke-opacity="0.35" stroke-width="2" fill="none"/>
+      <path d="M0,440 L200,310 L380,410 L600,280 L820,400 L1040,290 L1260,430 L1440,340 L1440,520 L0,520 Z" fill="url(#mountFore)"/>
+      <path d="M0,440 L200,310 L380,410 L600,280 L820,400 L1040,290 L1260,430 L1440,340" stroke="#00f0ff" stroke-opacity="0.5" stroke-width="2.5" fill="none"/>
+    </svg>
+    <div class="horizon-grid"></div>
+  </div>
+
   <header>
     <div class="brand">
-      <div class="brand-logo">BI</div>
+      <div class="brand-logo-wrap">
+        <svg class="snowflake-svg" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <polygon points="50,38 62,50 50,62 38,50" fill="rgba(0, 240, 255, 0.25)" stroke="#00f0ff" stroke-width="2.5"/>
+          <circle cx="50" cy="50" r="4" fill="#00f0ff"/>
+          <line x1="50" y1="38" x2="50" y2="8" stroke="#00f0ff" stroke-width="2.5" stroke-linecap="round"/>
+          <line x1="50" y1="20" x2="40" y2="14" stroke="#00f0ff" stroke-width="2"/>
+          <line x1="50" y1="20" x2="60" y2="14" stroke="#00f0ff" stroke-width="2"/>
+          <line x1="50" y1="62" x2="50" y2="92" stroke="#00f0ff" stroke-width="2.5" stroke-linecap="round"/>
+          <line x1="50" y1="80" x2="40" y2="86" stroke="#00f0ff" stroke-width="2"/>
+          <line x1="50" y1="80" x2="60" y2="86" stroke="#00f0ff" stroke-width="2"/>
+          <line x1="60" y1="44" x2="86" y2="29" stroke="#00f0ff" stroke-width="2.5" stroke-linecap="round"/>
+          <line x1="73" y1="36" x2="73" y2="24" stroke="#00f0ff" stroke-width="2"/>
+          <line x1="73" y1="36" x2="83" y2="42" stroke="#00f0ff" stroke-width="2"/>
+          <line x1="40" y1="56" x2="14" y2="71" stroke="#00f0ff" stroke-width="2.5" stroke-linecap="round"/>
+          <line x1="27" y1="64" x2="27" y2="76" stroke="#00f0ff" stroke-width="2"/>
+          <line x1="27" y1="64" x2="17" y2="58" stroke="#00f0ff" stroke-width="2"/>
+          <line x1="60" y1="56" x2="86" y2="71" stroke="#00f0ff" stroke-width="2.5" stroke-linecap="round"/>
+          <line x1="73" y1="64" x2="83" y2="58" stroke="#00f0ff" stroke-width="2"/>
+          <line x1="73" y1="64" x2="73" y2="76" stroke="#00f0ff" stroke-width="2"/>
+          <line x1="40" y1="44" x2="14" y2="29" stroke="#00f0ff" stroke-width="2.5" stroke-linecap="round"/>
+          <line x1="27" y1="36" x2="17" y2="42" stroke="#00f0ff" stroke-width="2"/>
+          <line x1="27" y1="36" x2="27" y2="24" stroke="#00f0ff" stroke-width="2"/>
+        </svg>
+      </div>
+
       <div class="brand-title">BLACK<span>ICE</span></div>
       <div class="brand-badge">V1.0.0</div>
+      <div class="crypto-badge">🔒 AES-256-GCM VAULT</div>
     </div>
+
     <div class="header-status">
       <div><span class="pulse-dot"></span> SENTINEL ACTIVE</div>
       <div id="driver-indicator" style="color: var(--cyan)">KERNEL: DETECTING...</div>
@@ -449,7 +665,6 @@
   </header>
 
   <main>
-    <!-- TOP TELEMETRY METRICS -->
     <div class="stats-grid">
       <div class="stat-card">
         <div class="stat-label">Indexed Threat Ranges</div>
@@ -463,24 +678,22 @@
         <div class="stat-label">Packets Intercepted</div>
         <div class="stat-value" id="stat-packets">--</div>
       </div>
-      <div class="stat-card amber">
-        <div class="stat-label">Engine Memory / Feeds</div>
+      <div class="stat-card purple">
+        <div class="stat-label">Intelligence Feeds</div>
         <div class="stat-value" id="stat-feeds">--</div>
       </div>
     </div>
 
-    <!-- MAIN COCKPIT: INSPECTOR & LIVE STREAM -->
     <div class="content-grid">
-      <!-- THREAT INSPECTOR -->
       <div class="panel">
         <div class="panel-header">
           <div class="panel-title"><span>//</span> Threat Intelligence Inspector</div>
-          <div style="font-family: var(--mono); font-size: 11px; color: var(--text-muted)">Radix-Trie O(prefix)</div>
+          <div style="font-family: var(--mono); font-size: 11px; color: var(--text-muted)">Radix-Trie Bitwise O(prefix)</div>
         </div>
 
         <div class="search-box">
-          <input type="text" id="ip-query" class="search-input" placeholder="Enter IP address (e.g. 185.220.101.5)" />
-          <button class="btn" onclick="inspectIP()">Query</button>
+          <input type="text" id="ip-query" class="search-input" placeholder="Enter IP address to analyze (e.g. 185.220.101.5)" />
+          <button class="btn" onclick="inspectIP()">Query IP</button>
         </div>
 
         <div class="verdict-card" id="verdict-area">
@@ -496,37 +709,36 @@
               </div>
             </div>
             <div id="verdict-actions">
-              <!-- Dynamically rendered ban button -->
             </div>
           </div>
 
-          <div style="font-family: var(--mono); font-size: 12px; color: var(--text-muted); margin-top: 8px;">
-            MATCHED INTELLIGENCE FEEDS
+          <div style="font-family: var(--mono); font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1.5px;">
+            MATCHED INTELLIGENCE FEEDS & ASN REPUTATION
           </div>
           <ul class="feed-match-list" id="match-list">
-            <li class="feed-match-item" style="color: var(--text-muted)">No query performed yet.</li>
+            <li class="feed-match-item" style="color: var(--text-muted)">No IP queried yet. Type an IP above to evaluate.</li>
           </ul>
         </div>
       </div>
 
-      <!-- LIVE TELEMETRY TERMINAL -->
       <div class="panel">
         <div class="panel-header">
-          <div class="panel-title"><span>//</span> Ingress Telemetry Stream</div>
-          <div style="font-family: var(--mono); font-size: 11px; color: var(--green);">● SSE LIVE</div>
+          <div class="panel-title"><span>//</span> Live Ingress Telemetry Stream</div>
+          <div style="font-family: var(--mono); font-size: 11px; color: var(--green); display: flex; align-items: center; gap: 6px;">
+            <span class="pulse-dot"></span> SSE STREAM
+          </div>
         </div>
         <div class="terminal-body" id="terminal-stream">
           <div class="log-line">
             <span class="log-time">[BOOT]</span>
             <span class="log-event INSPECT">SYSTEM</span>
             <span class="log-ip">127.0.0.1</span>
-            <span class="log-msg">BlackICE telemetry engine initialized and listening.</span>
+            <span class="log-msg">BlackICE telemetry engine online. AES-256-GCM vault initialized.</span>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- ACTIVE BANS TABLE -->
     <div class="panel">
       <div class="panel-header">
         <div class="panel-title"><span>//</span> Active Kernel Blocklist (nftables / ipset)</div>
@@ -536,9 +748,9 @@
         <thead>
           <tr>
             <th>IP ADDRESS</th>
-            <th>REASON / THREAT TYPE</th>
+            <th>REASON / THREAT CATEGORY</th>
             <th>SCORE</th>
-            <th>DROPPED PKTS</th>
+            <th>DROPPED PACKETS</th>
             <th>EXPIRES IN</th>
             <th>ACTION</th>
           </tr>
@@ -554,7 +766,7 @@
 
   <footer>
     <div>BLACKICE // Engineered by Iris (@iriss-dev) · GPL-3.0-or-later</div>
-    <div>Zero-Trust Autonomous Ingress Defense</div>
+    <div>Zero-Trust Autonomous Ingress Defense · AES-256-GCM Hardened</div>
   </footer>
 
   <script>
@@ -567,7 +779,7 @@
         document.getElementById('stat-packets').textContent = (data.total_packets_dropped || 0).toLocaleString();
         const feedCount = Object.keys(data.feed_status || {}).length;
         document.getElementById('stat-feeds').textContent = `${feedCount} Feeds OK`;
-        document.getElementById('driver-indicator').textContent = `DRIVER: ${data.driver?.toUpperCase() || 'MOCK'}`;
+        document.getElementById('driver-indicator').textContent = `KERNEL: ${data.driver?.toUpperCase() || 'MOCK'}`;
       } catch (err) {
         console.error("Failed to load stats", err);
       }
@@ -711,7 +923,6 @@
       banIP(ip, reason);
     }
 
-    // Connect Server-Sent Events (SSE) for real-time telemetry stream
     function initEventStream() {
       const evtSource = new EventSource('/v1/stream');
       const terminal = document.getElementById('terminal-stream');
@@ -729,7 +940,6 @@
             <span class="log-msg">${item.message || JSON.stringify(item.details || {})}</span>
           `;
           terminal.prepend(line);
-          // Keep terminal capped at 100 items
           if (terminal.children.length > 100) {
             terminal.removeChild(terminal.lastChild);
           }
@@ -743,7 +953,6 @@
       if (e.key === 'Enter') inspectIP();
     });
 
-    // Initial load
     fetchStats();
     loadBans();
     initEventStream();
