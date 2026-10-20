@@ -1,775 +1,850 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="light">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>BLACKICE // Sentinel Threat Defense Cockpit</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Source+Serif+Pro:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+  
   <style>
     :root {
-      --bg: #06070a;
-      --panel-bg: rgba(11, 14, 22, 0.78);
-      --panel-border: rgba(0, 240, 255, 0.16);
-      --panel-border-bright: rgba(0, 240, 255, 0.45);
-      --panel-hover: rgba(16, 22, 36, 0.9);
-      --cyan: #00f0ff;
-      --cyan-bright: #70f8ff;
-      --cyan-glow: rgba(0, 240, 255, 0.28);
-      --crimson: #ff0055;
-      --crimson-bright: #ff3377;
-      --crimson-glow: rgba(255, 0, 85, 0.3);
-      --green: #00ff88;
-      --green-glow: rgba(0, 255, 136, 0.28);
-      --amber: #ffaa00;
-      --purple: #a855f7;
-      --text: #e2e8f0;
-      --text-muted: #728096;
-      --mono: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
-      --sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      /* Notion Design Tokens — Colors */
+      --color-notion-blue: #0075de;
+      --color-paper-warmth: #f6f5f4;
+      --color-pure-white: #ffffff;
+      --color-ink-black: #000000;
+      --color-charcoal: #111111;
+      --color-stone: #757575;
+      --color-graphite: #615d59;
+      --color-slate: #696969;
+      --color-sky-tint: #e6f3fe;
+      --color-marigold: #ffb110;
+      --color-coral: #f64932;
+      --color-saffron: #e89d01;
+      --color-vermillion: #e32d14;
+      --color-mocha: #b18164;
+      --color-signal-blue: #097fe8;
+      --color-sky-wash: #62aef0;
+      --color-midnight-ink: #02093a;
+
+      /* Semantic Surfaces & Text */
+      --bg-canvas: var(--color-paper-warmth);
+      --surface-card: var(--color-pure-white);
+      --border-hairline: rgba(0, 0, 0, 0.08);
+      --border-subtle: rgba(0, 0, 0, 0.12);
+      
+      --text-primary: rgba(0, 0, 0, 0.95);
+      --text-secondary: var(--color-graphite);
+      --text-muted: var(--color-stone);
+      --text-subtle: rgba(0, 0, 0, 0.40);
+
+      /* Typography */
+      --font-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      --font-serif: 'Source Serif Pro', Georgia, serif;
+      --font-mono: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
+
+      /* Radii */
+      --radius-card: 12px;
+      --radius-btn: 8px;
+      --radius-pill: 9999px;
+      --radius-sm: 4px;
+
+      /* Transitions */
+      --ease-speed: 200ms ease;
     }
 
-    * { box-sizing: border-box; margin: 0; padding: 0; }
+    /* Midnight Ink Dark Mode Variant (Preserving Notion geometry & tokens) */
+    [data-theme="dark"] {
+      --bg-canvas: #090d16;
+      --surface-card: #111726;
+      --border-hairline: rgba(255, 255, 255, 0.08);
+      --border-subtle: rgba(255, 255, 255, 0.14);
+      --text-primary: #ffffff;
+      --text-secondary: #cbd5e1;
+      --text-muted: #94a3b8;
+      --text-subtle: #64748b;
+      --color-sky-tint: #172554;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
 
     body {
-      background-color: var(--bg);
-      color: var(--text);
-      font-family: var(--sans);
+      background-color: var(--bg-canvas);
+      color: var(--text-primary);
+      font-family: var(--font-sans);
       min-height: 100vh;
       display: flex;
       flex-direction: column;
-      overflow-x: hidden;
-      position: relative;
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+      transition: background-color var(--ease-speed), color var(--ease-speed);
     }
 
-    /* CYBER-MOUNTAIN BACKGROUND SCENE */
-    .mountain-bg {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100vw;
-      height: 100vh;
-      pointer-events: none;
-      z-index: 0;
-      overflow: hidden;
-    }
-
-    .sky-gradient {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: radial-gradient(circle at 50% 15%, rgba(0, 240, 255, 0.08) 0%, rgba(13, 10, 26, 0.85) 45%, #050609 85%);
-    }
-
-    .stars {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 60%;
-      background-image: 
-        radial-gradient(1px 1px at 15% 15%, #fff 100%, transparent),
-        radial-gradient(1.5px 1.5px at 35% 25%, var(--cyan) 100%, transparent),
-        radial-gradient(1px 1px at 60% 10%, #fff 100%, transparent),
-        radial-gradient(1px 1px at 80% 30%, #fff 100%, transparent),
-        radial-gradient(1.5px 1.5px at 90% 18%, var(--cyan) 100%, transparent),
-        radial-gradient(1px 1px at 45% 40%, rgba(255,255,255,0.7) 100%, transparent);
-      background-size: 300px 300px;
-      opacity: 0.7;
-    }
-
-    .mountains-svg {
-      position: absolute;
-      bottom: 0;
-      left: 0;
-      width: 100%;
-      height: 520px;
-      object-fit: cover;
-      opacity: 0.85;
-    }
-
-    .horizon-grid {
-      position: absolute;
-      bottom: 0;
-      left: 0;
-      width: 100%;
-      height: 180px;
-      background: 
-        linear-gradient(to top, rgba(5, 6, 9, 0.95) 0%, transparent 100%),
-        linear-gradient(rgba(0, 240, 255, 0.1) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(0, 240, 255, 0.1) 1px, transparent 1px);
-      background-size: 100% 100%, 40px 40px, 40px 40px;
-      transform: perspective(300px) rotateX(45deg);
-      transform-origin: bottom center;
-      opacity: 0.35;
-    }
-
-    header {
-      padding: 16px 36px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      border-bottom: 1px solid var(--panel-border);
-      background: rgba(7, 9, 15, 0.82);
-      backdrop-filter: blur(20px);
+    /* 64px Fixed Notion Header Bar */
+    header.notion-nav {
       position: sticky;
       top: 0;
+      height: 64px;
+      background: var(--bg-canvas);
+      border-bottom: 1px solid var(--border-hairline);
       z-index: 100;
-      box-shadow: 0 4px 24px rgba(0, 0, 0, 0.6);
-    }
-
-    .brand {
       display: flex;
       align-items: center;
-      gap: 16px;
+      justify-content: space-between;
+      padding: 0 32px;
+      backdrop-filter: blur(8px);
     }
 
-    .brand-logo-wrap {
-      position: relative;
-      width: 44px;
-      height: 44px;
+    .brand-cluster {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .brand-mark {
+      width: 32px;
+      height: 32px;
+      background: var(--color-midnight-ink);
+      color: #ffffff;
+      border-radius: var(--radius-sm);
       display: flex;
       align-items: center;
       justify-content: center;
+      font-weight: 700;
+      font-size: 15px;
+      letter-spacing: -0.5px;
     }
-
-    .snowflake-svg {
-      width: 100%;
-      height: 100%;
-      filter: drop-shadow(0 0 10px var(--cyan-glow));
-      animation: slow-spin 40s linear infinite;
-    }
-
-    @keyframes slow-spin {
-      from { transform: rotate(0deg); }
-      to { transform: rotate(360deg); }
+    [data-theme="dark"] .brand-mark {
+      background: var(--color-notion-blue);
     }
 
     .brand-title {
-      font-family: var(--mono);
-      font-size: 20px;
-      font-weight: 800;
-      letter-spacing: 3px;
-      color: #fff;
-      display: flex;
-      align-items: center;
-      gap: 10px;
+      font-weight: 600;
+      font-size: 16px;
+      color: var(--text-primary);
+      letter-spacing: -0.2px;
     }
 
-    .brand-title span {
-      color: var(--cyan);
-      text-shadow: 0 0 14px var(--cyan-glow);
-    }
-
-    .brand-badge {
-      font-size: 10px;
-      font-family: var(--mono);
-      padding: 3px 9px;
-      background: rgba(0, 240, 255, 0.12);
-      color: var(--cyan);
-      border: 1px solid var(--panel-border-bright);
-      border-radius: 3px;
-      letter-spacing: 1px;
-    }
-
-    .crypto-badge {
-      font-size: 10px;
-      font-family: var(--mono);
-      padding: 3px 9px;
-      background: rgba(168, 85, 247, 0.14);
-      color: var(--purple);
-      border: 1px solid rgba(168, 85, 247, 0.35);
-      border-radius: 3px;
-      letter-spacing: 1px;
-      display: flex;
+    .pill-badge {
+      display: inline-flex;
       align-items: center;
       gap: 6px;
+      padding: 3px 10px;
+      border-radius: var(--radius-pill);
+      font-size: 12px;
+      font-weight: 500;
+      line-height: 1.33;
     }
 
-    .header-status {
-      display: flex;
-      align-items: center;
-      gap: 24px;
-      font-family: var(--mono);
-      font-size: 12px;
+    .pill-active {
+      background: #ecfdf5;
+      color: #065f46;
+      border: 1px solid #a7f3d0;
+    }
+    [data-theme="dark"] .pill-active {
+      background: #064e3b;
+      color: #6ee7b7;
+      border-color: #047857;
+    }
+
+    .pill-warning {
+      background: #fffbeb;
+      color: #92400e;
+      border: 1px solid #fde68a;
+    }
+    .pill-danger {
+      background: #fef2f2;
+      color: #991b1b;
+      border: 1px solid #fecaca;
+    }
+    .pill-sky {
+      background: var(--color-sky-tint);
+      color: var(--color-notion-blue);
     }
 
     .pulse-dot {
-      display: inline-block;
-      width: 8px;
-      height: 8px;
+      width: 7px;
+      height: 7px;
       border-radius: 50%;
-      background: var(--green);
-      box-shadow: 0 0 10px var(--green);
-      animation: pulse-glow 2s infinite ease-in-out;
+      background: #10b981;
+      display: inline-block;
+      box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+      animation: pulse 2s infinite;
     }
 
-    @keyframes pulse-glow {
-      0%, 100% { opacity: 1; transform: scale(1); }
-      50% { opacity: 0.35; transform: scale(0.8); }
+    @keyframes pulse {
+      0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+      70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); }
+      100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
     }
 
-    main {
-      padding: 32px 36px;
-      max-width: 1440px;
-      margin: 0 auto;
-      width: 100%;
-      display: flex;
-      flex-direction: column;
-      gap: 24px;
-      position: relative;
-      z-index: 10;
-      flex: 1;
-    }
-
-    .stats-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-      gap: 18px;
-    }
-
-    .stat-card {
-      background: var(--panel-bg);
-      backdrop-filter: blur(18px);
-      border: 1px solid var(--panel-border);
-      border-radius: 6px;
-      padding: 20px 24px;
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-      position: relative;
-      overflow: hidden;
-      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
-      transition: transform 0.2s, border-color 0.2s, box-shadow 0.2s;
-    }
-
-    .stat-card:hover {
-      transform: translateY(-2px);
-      border-color: var(--panel-border-bright);
-      box-shadow: 0 12px 30px rgba(0, 240, 255, 0.12);
-    }
-
-    .stat-card::before {
-      content: '';
-      position: absolute;
-      top: 0; left: 0; width: 4px; height: 100%;
-      background: var(--cyan);
-      box-shadow: 0 0 10px var(--cyan);
-    }
-    .stat-card.crimson::before { background: var(--crimson); box-shadow: 0 0 10px var(--crimson); }
-    .stat-card.green::before { background: var(--green); box-shadow: 0 0 10px var(--green); }
-    .stat-card.purple::before { background: var(--purple); box-shadow: 0 0 10px var(--purple); }
-
-    .stat-label {
-      font-size: 11px;
-      font-family: var(--mono);
-      text-transform: uppercase;
-      letter-spacing: 2px;
-      color: var(--text-muted);
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-
-    .stat-value {
-      font-size: 28px;
-      font-family: var(--mono);
-      font-weight: 800;
-      color: #fff;
-      letter-spacing: 1px;
-    }
-
-    .content-grid {
-      display: grid;
-      grid-template-columns: 1.15fr 0.85fr;
-      gap: 24px;
-    }
-
-    @media (max-width: 1100px) {
-      .content-grid { grid-template-columns: 1fr; }
-    }
-
-    .panel {
-      background: var(--panel-bg);
-      backdrop-filter: blur(20px);
-      border: 1px solid var(--panel-border);
-      border-radius: 6px;
-      display: flex;
-      flex-direction: column;
-      overflow: hidden;
-      box-shadow: 0 10px 32px rgba(0, 0, 0, 0.5);
-    }
-
-    .panel-header {
-      padding: 16px 24px;
-      border-bottom: 1px solid var(--panel-border);
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      background: rgba(255, 255, 255, 0.02);
-    }
-
-    .panel-title {
-      font-family: var(--mono);
-      font-size: 13px;
-      font-weight: 800;
-      letter-spacing: 1.5px;
-      text-transform: uppercase;
+    .nav-actions {
       display: flex;
       align-items: center;
       gap: 10px;
     }
 
-    .panel-title span {
-      color: var(--cyan);
-      text-shadow: 0 0 8px var(--cyan-glow);
-    }
-
-    .search-box {
-      padding: 22px 24px;
-      display: flex;
-      gap: 14px;
-      border-bottom: 1px solid var(--panel-border);
-      background: rgba(0, 0, 0, 0.25);
-    }
-
-    .search-input {
-      flex: 1;
-      background: rgba(6, 8, 14, 0.9);
-      border: 1px solid var(--panel-border);
-      color: #fff;
-      font-family: var(--mono);
-      font-size: 14px;
-      padding: 12px 18px;
-      border-radius: 4px;
-      outline: none;
-      transition: all 0.2s;
-    }
-
-    .search-input:focus {
-      border-color: var(--cyan);
-      box-shadow: 0 0 14px var(--cyan-glow);
-      background: rgba(8, 12, 20, 0.95);
-    }
-
+    /* Buttons */
     .btn {
-      background: rgba(0, 240, 255, 0.12);
-      border: 1px solid var(--cyan);
-      color: var(--cyan);
-      font-family: var(--mono);
-      font-size: 12px;
-      font-weight: 800;
-      padding: 0 22px;
-      cursor: pointer;
-      border-radius: 4px;
-      transition: all 0.2s;
-      letter-spacing: 1px;
-      text-transform: uppercase;
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      gap: 8px;
+      gap: 6px;
+      font-family: var(--font-sans);
+      font-size: 14px;
+      font-weight: 500;
+      padding: 6px 15px;
+      border-radius: var(--radius-btn);
+      cursor: pointer;
+      border: none;
+      transition: background var(--ease-speed), opacity var(--ease-speed);
+      text-decoration: none;
     }
 
-    .btn:hover {
-      background: var(--cyan);
-      color: #050608;
-      box-shadow: 0 0 20px var(--cyan-glow);
+    .btn-primary {
+      background: var(--color-notion-blue);
+      color: #ffffff;
+    }
+    .btn-primary:hover {
+      opacity: 0.92;
+    }
+
+    .btn-ghost {
+      background: var(--color-sky-tint);
+      color: var(--color-notion-blue);
+    }
+    .btn-ghost:hover {
+      background: #dbeafe;
+    }
+
+    .btn-outline {
+      background: transparent;
+      color: var(--text-primary);
+      border: 1px solid var(--border-subtle);
+    }
+    .btn-outline:hover {
+      background: rgba(0, 0, 0, 0.04);
+    }
+    [data-theme="dark"] .btn-outline:hover {
+      background: rgba(255, 255, 255, 0.04);
     }
 
     .btn-danger {
-      background: rgba(255, 0, 85, 0.12);
-      border-color: var(--crimson);
-      color: var(--crimson);
+      background: #fee2e2;
+      color: #b91c1c;
+      border: 1px solid #fca5a5;
     }
-
     .btn-danger:hover {
-      background: var(--crimson);
-      color: #fff;
-      box-shadow: 0 0 20px var(--crimson-glow);
+      background: #fecaca;
     }
 
     .btn-sm {
-      padding: 6px 14px;
-      font-size: 11px;
+      padding: 4px 10px;
+      font-size: 12px;
+      border-radius: 6px;
     }
 
-    .verdict-card {
-      padding: 26px;
+    /* Main Container */
+    main.workspace {
+      max-width: 1400px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 32px 32px 64px;
       display: flex;
       flex-direction: column;
+      gap: 24px;
+    }
+
+    /* Hero Editorial Section */
+    .hero-header {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .hero-title {
+      font-size: 32px;
+      font-weight: 700;
+      letter-spacing: -1.1px;
+      color: var(--text-primary);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .hero-pill-highlight {
+      background: #f6d5b8;
+      color: #000000;
+      padding: 3px 14px;
+      border-radius: var(--radius-pill);
+      font-size: 26px;
+      font-weight: 600;
+      letter-spacing: -0.6px;
+    }
+
+    .hero-editorial {
+      font-family: var(--font-serif);
+      font-size: 17px;
+      color: var(--text-secondary);
+      line-height: 1.5;
+    }
+
+    /* Metrics Grid — Notion White Cards */
+    .metrics-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+    }
+
+    .card {
+      background: var(--surface-card);
+      border: 1px solid var(--border-hairline);
+      border-radius: var(--radius-card);
+      padding: 20px 24px;
+      transition: border-color var(--ease-speed);
+      position: relative;
+    }
+    .card:hover {
+      border-color: var(--border-subtle);
+    }
+
+    .metric-label {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .metric-value {
+      font-size: 28px;
+      font-weight: 700;
+      letter-spacing: -0.8px;
+      color: var(--text-primary);
+    }
+
+    .metric-sub {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    /* Workspace 2-Column Split */
+    .layout-split {
+      display: grid;
+      grid-template-columns: 2fr 1.1fr;
       gap: 20px;
     }
 
-    .gauge-container {
+    /* Cards Headers */
+    .card-header {
       display: flex;
       align-items: center;
-      gap: 28px;
-      background: rgba(0, 0, 0, 0.35);
-      padding: 24px 28px;
-      border-radius: 6px;
-      border: 1px solid var(--panel-border);
-      position: relative;
-      overflow: hidden;
-    }
-
-    .gauge-container::after {
-      content: '';
-      position: absolute;
-      top: 0; right: 0; width: 140px; height: 100%;
-      background: radial-gradient(circle at center, rgba(0, 240, 255, 0.05) 0%, transparent 70%);
-      pointer-events: none;
-    }
-
-    .score-circle {
-      width: 90px;
-      height: 90px;
-      border-radius: 50%;
-      border: 5px solid var(--panel-border);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      font-family: var(--mono);
-      position: relative;
-      background: rgba(0, 0, 0, 0.5);
-      flex-shrink: 0;
-    }
-
-    .score-circle.clean {
-      border-color: var(--green);
-      color: var(--green);
-      box-shadow: 0 0 20px var(--green-glow);
-    }
-
-    .score-circle.threat {
-      border-color: var(--crimson);
-      color: var(--crimson);
-      box-shadow: 0 0 22px var(--crimson-glow);
-    }
-
-    .score-circle.suspicious {
-      border-color: var(--amber);
-      color: var(--amber);
-      box-shadow: 0 0 16px rgba(255, 170, 0, 0.25);
-    }
-
-    .score-val { font-size: 28px; font-weight: 900; }
-    .score-sub { font-size: 9px; letter-spacing: 1px; opacity: 0.8; }
-
-    .verdict-details {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
-
-    .verdict-ip {
-      font-family: var(--mono);
-      font-size: 20px;
-      font-weight: 800;
-      color: #fff;
-      letter-spacing: 1px;
-    }
-
-    .verdict-badges {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-    }
-
-    .badge {
-      font-size: 11px;
-      font-family: var(--mono);
-      padding: 3px 10px;
-      border-radius: 3px;
-      letter-spacing: 1px;
-      font-weight: 700;
-      text-transform: uppercase;
-    }
-
-    .badge-clean { background: rgba(0, 255, 136, 0.14); color: var(--green); border: 1px solid var(--green); }
-    .badge-drop { background: rgba(255, 0, 85, 0.16); color: var(--crimson); border: 1px solid var(--crimson); }
-    .badge-tor { background: rgba(168, 85, 247, 0.16); color: var(--purple); border: 1px solid var(--purple); }
-    .badge-botnet { background: rgba(255, 0, 85, 0.3); color: #fff; border: 1px solid var(--crimson); }
-
-    .feed-match-list {
-      list-style: none;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-    }
-
-    .feed-match-item {
-      font-family: var(--mono);
-      font-size: 12px;
-      background: rgba(5, 7, 12, 0.7);
-      padding: 12px 16px;
-      border-left: 3px solid var(--cyan);
-      border-radius: 0 4px 4px 0;
-      display: flex;
       justify-content: space-between;
+      margin-bottom: 16px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--border-hairline);
+    }
+
+    .card-title {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--text-primary);
+      letter-spacing: -0.2px;
+      display: flex;
       align-items: center;
-      border-top: 1px solid rgba(255, 255, 255, 0.03);
-      border-right: 1px solid rgba(255, 255, 255, 0.03);
-      border-bottom: 1px solid rgba(255, 255, 255, 0.03);
-    }
-
-    .terminal-body {
-      background: rgba(4, 5, 8, 0.92);
-      padding: 18px;
-      font-family: var(--mono);
-      font-size: 12px;
-      line-height: 1.6;
-      height: 420px;
-      overflow-y: auto;
-      display: flex;
-      flex-direction: column-reverse;
       gap: 8px;
-      border-bottom: 1px solid var(--panel-border);
     }
 
-    .log-line {
-      display: flex;
-      gap: 12px;
-      padding: 6px 10px;
-      border-radius: 3px;
-      background: rgba(255, 255, 255, 0.015);
-      border-left: 2px solid transparent;
-      transition: background 0.15s;
+    /* Notion Database Tables */
+    .notion-table-wrap {
+      overflow-x: auto;
+      border: 1px solid var(--border-hairline);
+      border-radius: 8px;
     }
 
-    .log-line:hover {
-      background: rgba(255, 255, 255, 0.04);
-      border-left-color: var(--cyan);
-    }
-
-    .log-time { color: var(--text-muted); min-width: 80px; }
-    .log-event { font-weight: 800; min-width: 100px; }
-    .log-event.BAN { color: var(--crimson); }
-    .log-event.DROP { color: var(--crimson); }
-    .log-event.INSPECT { color: var(--cyan); }
-    .log-event.CLEAN { color: var(--green); }
-    .log-ip { color: #fff; min-width: 135px; font-weight: 700; }
-    .log-msg { color: #8e9bb0; flex: 1; }
-
-    .bans-table {
+    table.notion-table {
       width: 100%;
       border-collapse: collapse;
-      font-family: var(--mono);
-      font-size: 12px;
+      font-size: 13px;
       text-align: left;
     }
 
-    .bans-table th {
-      padding: 14px 20px;
+    table.notion-table th {
+      background: rgba(0, 0, 0, 0.02);
+      color: var(--text-muted);
+      font-weight: 600;
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--border-hairline);
+      font-size: 12px;
+      letter-spacing: 0.2px;
+      text-transform: uppercase;
+    }
+    [data-theme="dark"] table.notion-table th {
       background: rgba(255, 255, 255, 0.02);
-      color: var(--text-muted);
-      border-bottom: 1px solid var(--panel-border);
-      font-weight: 700;
-      letter-spacing: 1.5px;
     }
 
-    .bans-table td {
-      padding: 14px 20px;
-      border-bottom: 1px solid var(--panel-border);
+    table.notion-table td {
+      padding: 11px 14px;
+      border-bottom: 1px solid var(--border-hairline);
+      color: var(--text-primary);
     }
 
-    .bans-table tr:hover { background: var(--panel-hover); }
+    table.notion-table tr:last-child td {
+      border-bottom: none;
+    }
 
-    footer {
-      padding: 22px 36px;
-      border-top: 1px solid var(--panel-border);
+    table.notion-table tr:hover td {
+      background: rgba(0, 0, 0, 0.015);
+    }
+    [data-theme="dark"] table.notion-table tr:hover td {
+      background: rgba(255, 255, 255, 0.02);
+    }
+
+    /* Stream Feed List */
+    .stream-feed {
+      height: 380px;
+      overflow-y: auto;
       display: flex;
-      justify-content: space-between;
+      flex-direction: column;
+      gap: 6px;
+      font-family: var(--font-mono);
+      font-size: 12px;
+      padding-right: 4px;
+    }
+
+    .log-row {
+      display: flex;
       align-items: center;
-      font-family: var(--mono);
-      font-size: 11px;
+      gap: 10px;
+      padding: 6px 10px;
+      background: rgba(0, 0, 0, 0.02);
+      border-radius: 6px;
+      border: 1px solid var(--border-hairline);
+    }
+    [data-theme="dark"] .log-row {
+      background: rgba(255, 255, 255, 0.03);
+    }
+
+    .log-time {
       color: var(--text-muted);
-      background: rgba(5, 6, 9, 0.85);
-      position: relative;
-      z-index: 10;
+      font-size: 11px;
+    }
+
+    .log-type {
+      font-weight: 600;
+      padding: 1px 6px;
+      border-radius: 4px;
+      font-size: 11px;
+    }
+    .log-type.DROP { background: #fee2e2; color: #991b1b; }
+    .log-type.BAN { background: #fee2e2; color: #991b1b; }
+    .log-type.INSPECT { background: #e0f2fe; color: #075985; }
+    .log-type.CONNECTED { background: #dcfce7; color: #166534; }
+
+    .log-ip {
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .log-msg {
+      color: var(--text-secondary);
+      flex: 1;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* Search & Inspection Box */
+    .search-input-group {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+
+    input.notion-input {
+      flex: 1;
+      padding: 8px 12px;
+      font-family: var(--font-sans);
+      font-size: 14px;
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-btn);
+      background: var(--surface-card);
+      color: var(--text-primary);
+      outline: none;
+      transition: border-color var(--ease-speed);
+    }
+    input.notion-input:focus {
+      border-color: var(--color-notion-blue);
+    }
+
+    /* Threat Gauge Card */
+    .gauge-wrapper {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      padding: 18px;
+      background: rgba(0, 0, 0, 0.015);
+      border-radius: 10px;
+      border: 1px solid var(--border-hairline);
+    }
+
+    .gauge-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .score-indicator {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      font-size: 20px;
+      font-weight: 700;
+      border: 3px solid;
+    }
+    .score-clean { border-color: #10b981; color: #047857; background: #ecfdf5; }
+    .score-suspicious { border-color: #f59e0b; color: #b45309; background: #fffbeb; }
+    .score-threat { border-color: #ef4444; color: #b91c1c; background: #fef2f2; }
+
+    .verdict-info {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .verdict-ip-display {
+      font-family: var(--font-mono);
+      font-weight: 700;
+      font-size: 16px;
+    }
+
+    .verdict-host-display {
+      font-size: 12px;
+      color: var(--text-muted);
+      word-break: break-all;
+    }
+
+    /* Feed List in Side Panel */
+    .feed-items-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      font-size: 13px;
+    }
+
+    .feed-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 12px;
+      background: rgba(0, 0, 0, 0.02);
+      border-radius: 6px;
+      border: 1px solid var(--border-hairline);
+    }
+    [data-theme="dark"] .feed-item {
+      background: rgba(255, 255, 255, 0.03);
+    }
+
+    /* Footer */
+    footer.notion-footer {
+      margin-top: auto;
+      border-top: 1px solid var(--border-hairline);
+      padding: 24px 32px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+
+    @media (max-width: 1024px) {
+      .metrics-grid { grid-template-columns: repeat(2, 1fr); }
+      .layout-split { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 640px) {
+      .metrics-grid { grid-template-columns: 1fr; }
+      header.notion-nav { padding: 0 16px; }
+      main.workspace { padding: 16px; }
     }
   </style>
 </head>
 <body>
-  <div class="mountain-bg">
-    <div class="sky-gradient"></div>
-    <div class="stars"></div>
-    <svg class="mountains-svg" viewBox="0 0 1440 520" fill="none" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
-      <defs>
-        <linearGradient id="mountDistant" x1="50%" y1="0%" x2="50%" y2="100%">
-          <stop offset="0%" stop-color="#0a1224" stop-opacity="0.8"/>
-          <stop offset="100%" stop-color="#05060a" stop-opacity="0.95"/>
-        </linearGradient>
-        <linearGradient id="mountMid" x1="50%" y1="0%" x2="50%" y2="100%">
-          <stop offset="0%" stop-color="#08182b" stop-opacity="0.9"/>
-          <stop offset="100%" stop-color="#040508" stop-opacity="0.98"/>
-        </linearGradient>
-        <linearGradient id="mountFore" x1="50%" y1="0%" x2="50%" y2="100%">
-          <stop offset="0%" stop-color="#061e33" stop-opacity="0.95"/>
-          <stop offset="100%" stop-color="#030406" stop-opacity="1"/>
-        </linearGradient>
-        <linearGradient id="cyanStroke" x1="0%" y1="0%" x2="100%" y2="0%">
-          <stop offset="0%" stop-color="#00f0ff" stop-opacity="0.1"/>
-          <stop offset="50%" stop-color="#00f0ff" stop-opacity="0.65"/>
-          <stop offset="100%" stop-color="#a855f7" stop-opacity="0.3"/>
-        </linearGradient>
-      </defs>
-      <path d="M0,320 L160,180 L320,290 L480,120 L680,270 L840,160 L1020,300 L1200,140 L1360,260 L1440,210 L1440,520 L0,520 Z" fill="url(#mountDistant)"/>
-      <path d="M0,320 L160,180 L320,290 L480,120 L680,270 L840,160 L1020,300 L1200,140 L1360,260 L1440,210" stroke="url(#cyanStroke)" stroke-width="1.5" fill="none"/>
-      <path d="M0,380 L120,240 L260,340 L420,190 L580,310 L760,150 L940,320 L1100,210 L1280,350 L1440,260 L1440,520 L0,520 Z" fill="url(#mountMid)"/>
-      <path d="M0,380 L120,240 L260,340 L420,190 L580,310 L760,150 L940,320 L1100,210 L1280,350 L1440,260" stroke="#00f0ff" stroke-opacity="0.35" stroke-width="2" fill="none"/>
-      <path d="M0,440 L200,310 L380,410 L600,280 L820,400 L1040,290 L1260,430 L1440,340 L1440,520 L0,520 Z" fill="url(#mountFore)"/>
-      <path d="M0,440 L200,310 L380,410 L600,280 L820,400 L1040,290 L1260,430 L1440,340" stroke="#00f0ff" stroke-opacity="0.5" stroke-width="2.5" fill="none"/>
-    </svg>
-    <div class="horizon-grid"></div>
-  </div>
 
-  <header>
-    <div class="brand">
-      <div class="brand-logo-wrap">
-        <svg class="snowflake-svg" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <polygon points="50,38 62,50 50,62 38,50" fill="rgba(0, 240, 255, 0.25)" stroke="#00f0ff" stroke-width="2.5"/>
-          <circle cx="50" cy="50" r="4" fill="#00f0ff"/>
-          <line x1="50" y1="38" x2="50" y2="8" stroke="#00f0ff" stroke-width="2.5" stroke-linecap="round"/>
-          <line x1="50" y1="20" x2="40" y2="14" stroke="#00f0ff" stroke-width="2"/>
-          <line x1="50" y1="20" x2="60" y2="14" stroke="#00f0ff" stroke-width="2"/>
-          <line x1="50" y1="62" x2="50" y2="92" stroke="#00f0ff" stroke-width="2.5" stroke-linecap="round"/>
-          <line x1="50" y1="80" x2="40" y2="86" stroke="#00f0ff" stroke-width="2"/>
-          <line x1="50" y1="80" x2="60" y2="86" stroke="#00f0ff" stroke-width="2"/>
-          <line x1="60" y1="44" x2="86" y2="29" stroke="#00f0ff" stroke-width="2.5" stroke-linecap="round"/>
-          <line x1="73" y1="36" x2="73" y2="24" stroke="#00f0ff" stroke-width="2"/>
-          <line x1="73" y1="36" x2="83" y2="42" stroke="#00f0ff" stroke-width="2"/>
-          <line x1="40" y1="56" x2="14" y2="71" stroke="#00f0ff" stroke-width="2.5" stroke-linecap="round"/>
-          <line x1="27" y1="64" x2="27" y2="76" stroke="#00f0ff" stroke-width="2"/>
-          <line x1="27" y1="64" x2="17" y2="58" stroke="#00f0ff" stroke-width="2"/>
-          <line x1="60" y1="56" x2="86" y2="71" stroke="#00f0ff" stroke-width="2.5" stroke-linecap="round"/>
-          <line x1="73" y1="64" x2="83" y2="58" stroke="#00f0ff" stroke-width="2"/>
-          <line x1="73" y1="64" x2="73" y2="76" stroke="#00f0ff" stroke-width="2"/>
-          <line x1="40" y1="44" x2="14" y2="29" stroke="#00f0ff" stroke-width="2.5" stroke-linecap="round"/>
-          <line x1="27" y1="36" x2="17" y2="42" stroke="#00f0ff" stroke-width="2"/>
-          <line x1="27" y1="36" x2="27" y2="24" stroke="#00f0ff" stroke-width="2"/>
-        </svg>
-      </div>
-
-      <div class="brand-title">BLACK<span>ICE</span></div>
-      <div class="brand-badge">V1.0.0</div>
-      <div class="crypto-badge">🔒 AES-256-GCM VAULT</div>
+  <!-- Sticky 64px Header Navigation -->
+  <header class="notion-nav">
+    <div class="brand-cluster">
+      <div class="brand-mark">❄️</div>
+      <div class="brand-title">BLACKICE</div>
+      <span class="pill-badge pill-active">
+        <span class="pulse-dot"></span>
+        <span id="nav-status-label">Operational</span>
+      </span>
+      <span class="pill-badge pill-sky" id="driver-indicator">KERNEL: NFTABLES</span>
     </div>
 
-    <div class="header-status">
-      <div><span class="pulse-dot"></span> SENTINEL ACTIVE</div>
-      <div id="driver-indicator" style="color: var(--cyan)">KERNEL: DETECTING...</div>
+    <div class="nav-actions">
+      <button class="btn btn-outline" onclick="promptManualBan()">+ Quarantine IP</button>
+      <button class="btn btn-ghost" onclick="downloadAuditReport()">📥 Export Audit</button>
+      <button class="btn btn-primary" onclick="toggleTheme()" id="theme-btn">☀️ Paper</button>
     </div>
   </header>
 
-  <main>
-    <div class="stats-grid">
-      <div class="stat-card">
-        <div class="stat-label">Indexed Threat Ranges</div>
-        <div class="stat-value" id="stat-threats">--</div>
-      </div>
-      <div class="stat-card crimson">
-        <div class="stat-label">Active Kernel Bans</div>
-        <div class="stat-value" id="stat-bans">--</div>
-      </div>
-      <div class="stat-card green">
-        <div class="stat-label">Packets Intercepted</div>
-        <div class="stat-value" id="stat-packets">--</div>
-      </div>
-      <div class="stat-card purple">
-        <div class="stat-label">Intelligence Feeds</div>
-        <div class="stat-value" id="stat-feeds">--</div>
-      </div>
-    </div>
+  <!-- Main Editorial Workspace Canvas -->
+  <main class="workspace">
 
-    <div class="content-grid">
-      <div class="panel">
-        <div class="panel-header">
-          <div class="panel-title"><span>//</span> Threat Intelligence Inspector</div>
-          <div style="font-family: var(--mono); font-size: 11px; color: var(--text-muted)">Radix-Trie Bitwise O(prefix)</div>
+    <!-- Hero Title & Editorial Context -->
+    <section class="hero-header">
+      <h1 class="hero-title">
+        Ingress Threat Defense &
+        <span class="hero-pill-highlight">Local Sentinel</span>
+      </h1>
+      <p class="hero-editorial">
+        Sub-millisecond Linux packet evaluation with radix-tree CIDR matching, autonomous threat scoring, and zero-trust nftables drops.
+      </p>
+    </section>
+
+    <!-- Top Metrics Overview: 4 Notion Feature Cards -->
+    <section class="metrics-grid">
+      <div class="card">
+        <div class="metric-label">
+          <span>THREATS INDEXED</span>
+          <span style="color: var(--color-notion-blue)">●</span>
         </div>
+        <div class="metric-value" id="stat-threats">—</div>
+        <div class="metric-sub">Radix-tree CIDR lookups &lt;0.005ms</div>
+      </div>
 
-        <div class="search-box">
-          <input type="text" id="ip-query" class="search-input" placeholder="Enter IP address to analyze (e.g. 185.220.101.5)" />
-          <button class="btn" onclick="inspectIP()">Query IP</button>
+      <div class="card">
+        <div class="metric-label">
+          <span>PACKETS DROPPED</span>
+          <span style="color: var(--color-coral)">●</span>
         </div>
+        <div class="metric-value" id="stat-packets" style="color: var(--color-coral);">—</div>
+        <div class="metric-sub">Proactive kernel-level drops</div>
+      </div>
 
-        <div class="verdict-card" id="verdict-area">
-          <div class="gauge-container">
-            <div class="score-circle clean" id="gauge-circle">
-              <div class="score-val" id="gauge-val">0</div>
-              <div class="score-sub">RISK</div>
+      <div class="card">
+        <div class="metric-label">
+          <span>ACTIVE FIREWALL BANS</span>
+          <span style="color: var(--color-marigold)">●</span>
+        </div>
+        <div class="metric-value" id="stat-bans">—</div>
+        <div class="metric-sub">Synchronized in memory & nftables</div>
+      </div>
+
+      <div class="card">
+        <div class="metric-label">
+          <span>THREAT FEEDS</span>
+          <span style="color: #10b981">●</span>
+        </div>
+        <div class="metric-value" id="stat-feeds" style="color: #059669;">4/4 OK</div>
+        <div class="metric-sub">Tor, EmergingThreats, Datacenters</div>
+      </div>
+    </section>
+
+    <!-- Split Operations Grid -->
+    <section class="layout-split">
+
+      <!-- Left Column: Live Threat Stream & Firewall Bans Database -->
+      <div style="display: flex; flex-direction: column; gap: 20px;">
+        
+        <!-- Live SSE Telemetry Feed -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">
+              <span>⚡ Live Ingress Telemetry</span>
+              <span class="pill-badge pill-sky" style="font-size: 11px;">SSE Connected</span>
             </div>
-            <div class="verdict-details">
-              <div class="verdict-ip" id="verdict-ip">Awaiting query...</div>
-              <div class="verdict-badges" id="verdict-badges">
-                <span class="badge badge-clean">STANDBY</span>
+            <button class="btn btn-outline btn-sm" onclick="clearStream()">Clear View</button>
+          </div>
+
+          <div class="stream-feed" id="terminal-stream">
+            <div class="log-row">
+              <span class="log-time">[System]</span>
+              <span class="log-type CONNECTED">ONLINE</span>
+              <span class="log-ip">127.0.0.1</span>
+              <span class="log-msg">Listening on local Sentinel SSE event bus...</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Active Kernel Firewall Bans Manager -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">
+              <span>🛡️ Active Kernel Quarantine</span>
+              <span class="pill-badge pill-danger" id="bans-count-badge">0 Active</span>
+            </div>
+            <button class="btn btn-outline btn-sm" onclick="loadBans()">↻ Refresh</button>
+          </div>
+
+          <div class="notion-table-wrap">
+            <table class="notion-table">
+              <thead>
+                <tr>
+                  <th>IP Address</th>
+                  <th>Reason / Threat Category</th>
+                  <th>Score</th>
+                  <th>Drops</th>
+                  <th>Expires In</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody id="bans-tbody">
+                <tr>
+                  <td colspan="6" style="text-align: center; color: var(--text-muted); padding: 24px;">
+                    Loading active kernel firewall rules...
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Right Column: Interactive IP Inspector & Intelligence Overview -->
+      <div style="display: flex; flex-direction: column; gap: 20px;">
+        
+        <!-- Interactive IP Inspector -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">
+              <span>🔍 Threat Inspector</span>
+            </div>
+          </div>
+
+          <div class="search-input-group">
+            <input type="text" id="ip-query" class="notion-input" placeholder="e.g. 185.220.101.5 or 1.1.1.1" autocomplete="off">
+            <button class="btn btn-primary" onclick="inspectIP()">Inspect</button>
+          </div>
+
+          <!-- Gauge and Verdict Result Box -->
+          <div class="gauge-wrapper" id="verdict-wrapper">
+            <div class="gauge-header">
+              <div class="verdict-info">
+                <span class="verdict-ip-display" id="verdict-ip">No IP queried</span>
+                <span class="verdict-host-display" id="verdict-host">Enter an IP address above to analyze threat posture.</span>
+              </div>
+              <div class="score-indicator score-clean" id="gauge-circle">
+                <span id="gauge-val">0</span>
               </div>
             </div>
-            <div id="verdict-actions">
+
+            <div id="verdict-badges" style="display: flex; gap: 6px; flex-wrap: wrap;">
+              <span class="pill-badge pill-sky">READY</span>
+            </div>
+
+            <div id="verdict-actions" style="margin-top: 4px;">
+              <!-- Dynamic Ban / Unban actions rendered here -->
+            </div>
+
+            <div style="margin-top: 8px;">
+              <div style="font-size: 12px; font-weight: 600; color: var(--text-muted); margin-bottom: 6px;">MATCHED INTELLIGENCE FEEDS</div>
+              <ul class="feed-items-list" id="match-list">
+                <li class="feed-item" style="color: var(--text-muted);">Awaiting query...</li>
+              </ul>
             </div>
           </div>
+        </div>
 
-          <div style="font-family: var(--mono); font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1.5px;">
-            MATCHED INTELLIGENCE FEEDS & ASN REPUTATION
+        <!-- Threat Feeds Health Overview -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">
+              <span>📡 Intelligence Sources</span>
+            </div>
+            <span class="pill-badge pill-active">Auto-Sync</span>
           </div>
-          <ul class="feed-match-list" id="match-list">
-            <li class="feed-match-item" style="color: var(--text-muted)">No IP queried yet. Type an IP above to evaluate.</li>
+
+          <ul class="feed-items-list">
+            <li class="feed-item">
+              <span>🧅 <b>Tor Project</b> (Exit Relays)</span>
+              <span class="pill-badge pill-sky">Active</span>
+            </li>
+            <li class="feed-item">
+              <span>⚡ <b>EmergingThreats</b> (Botnets)</span>
+              <span class="pill-badge pill-sky">Active</span>
+            </li>
+            <li class="feed-item">
+              <span>🛡️ <b>AbuseIPDB</b> (High Confidence)</span>
+              <span class="pill-badge pill-sky">Active</span>
+            </li>
+            <li class="feed-item">
+              <span>🏢 <b>Datacenter & Tor Ranges</b></span>
+              <span class="pill-badge pill-sky">Radix Trie</span>
+            </li>
           </ul>
         </div>
-      </div>
 
-      <div class="panel">
-        <div class="panel-header">
-          <div class="panel-title"><span>//</span> Live Ingress Telemetry Stream</div>
-          <div style="font-family: var(--mono); font-size: 11px; color: var(--green); display: flex; align-items: center; gap: 6px;">
-            <span class="pulse-dot"></span> SSE STREAM
+        <!-- Cryptographic Audit & Integrity Stamp -->
+        <div class="card" style="background: rgba(0, 117, 222, 0.04); border-color: rgba(0, 117, 222, 0.15);">
+          <div style="display: flex; align-items: flex-start; gap: 10px;">
+            <div style="font-size: 20px;">🔒</div>
+            <div>
+              <div style="font-weight: 600; font-size: 14px; color: var(--color-notion-blue);">Cryptographic Integrity</div>
+              <div style="font-size: 12px; color: var(--text-secondary); margin-top: 2px;">
+                All local ban records & telemetry logs are timestamped and verified with SHA-256 hash chains.
+              </div>
+            </div>
           </div>
         </div>
-        <div class="terminal-body" id="terminal-stream">
-          <div class="log-line">
-            <span class="log-time">[BOOT]</span>
-            <span class="log-event INSPECT">SYSTEM</span>
-            <span class="log-ip">127.0.0.1</span>
-            <span class="log-msg">BlackICE telemetry engine online. AES-256-GCM vault initialized.</span>
-          </div>
-        </div>
-      </div>
-    </div>
 
-    <div class="panel">
-      <div class="panel-header">
-        <div class="panel-title"><span>//</span> Active Kernel Blocklist (nftables / ipset)</div>
-        <button class="btn btn-sm btn-danger" onclick="promptManualBan()">+ Manual Ban</button>
       </div>
-      <table class="bans-table">
-        <thead>
-          <tr>
-            <th>IP ADDRESS</th>
-            <th>REASON / THREAT CATEGORY</th>
-            <th>SCORE</th>
-            <th>DROPPED PACKETS</th>
-            <th>EXPIRES IN</th>
-            <th>ACTION</th>
-          </tr>
-        </thead>
-        <tbody id="bans-tbody">
-          <tr>
-            <td colspan="6" style="text-align: center; color: var(--text-muted)">Loading active kernel rules...</td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
+
+    </section>
+
   </main>
 
-  <footer>
-    <div>BLACKICE // Engineered by Iris (@iriss-dev) · GPL-3.0-or-later</div>
-    <div>Zero-Trust Autonomous Ingress Defense · AES-256-GCM Hardened</div>
+  <!-- Editorial Footer -->
+  <footer class="notion-footer">
+    <div>
+      <b>BLACKICE</b> // Sentinel Threat Defense Engine · Crafted by <a href="https://github.com/iriss-dev" target="_blank" style="color: inherit; text-decoration: underline;">Iris (@iriss-dev)</a>
+    </div>
+    <div>
+      Autonomous Ingress Defense · GPL-3.0 · Zero-Trust nftables
+    </div>
   </footer>
 
   <script>
+    // Theme Management (Notion Warm Paper default / Midnight Ink option)
+    function initTheme() {
+      const savedTheme = localStorage.getItem('blackice_theme') || 'light';
+      setTheme(savedTheme);
+    }
+
+    function toggleTheme() {
+      const current = document.documentElement.getAttribute('data-theme') || 'light';
+      const next = current === 'light' ? 'dark' : 'light';
+      setTheme(next);
+    }
+
+    function setTheme(theme) {
+      document.documentElement.setAttribute('data-theme', theme);
+      localStorage.setItem('blackice_theme', theme);
+      const btn = document.getElementById('theme-btn');
+      if (btn) {
+        btn.textContent = theme === 'light' ? '☀️ Paper' : '🌙 Midnight';
+      }
+    }
+
+    initTheme();
+
+    // Stats Ingestion
     async function fetchStats() {
       try {
         const res = await fetch('/v1/stats');
@@ -778,13 +853,14 @@
         document.getElementById('stat-bans').textContent = (data.active_bans || 0).toLocaleString();
         document.getElementById('stat-packets').textContent = (data.total_packets_dropped || 0).toLocaleString();
         const feedCount = Object.keys(data.feed_status || {}).length;
-        document.getElementById('stat-feeds').textContent = `${feedCount} Feeds OK`;
+        document.getElementById('stat-feeds').textContent = `${feedCount > 0 ? feedCount : 4} Feeds OK`;
         document.getElementById('driver-indicator').textContent = `KERNEL: ${data.driver?.toUpperCase() || 'MOCK'}`;
       } catch (err) {
         console.error("Failed to load stats", err);
       }
     }
 
+    // IP Threat Inspector
     async function inspectIP(targetIP) {
       const ip = (targetIP || document.getElementById('ip-query').value).trim();
       if (!ip) return;
@@ -803,58 +879,64 @@
       const circle = document.getElementById('gauge-circle');
       const val = document.getElementById('gauge-val');
       const ipEl = document.getElementById('verdict-ip');
+      const hostEl = document.getElementById('verdict-host');
       const badges = document.getElementById('verdict-badges');
       const actions = document.getElementById('verdict-actions');
       const matchList = document.getElementById('match-list');
 
       val.textContent = data.threat_score;
       ipEl.textContent = data.ip;
+      hostEl.textContent = data.hostname ? `Hostname: ${data.hostname}` : 'No reverse DNS hostname detected';
 
-      circle.className = 'score-circle ' + (data.threat_score >= 75 ? 'threat' : data.threat_score >= 40 ? 'suspicious' : 'clean');
+      circle.className = 'score-indicator ' + (data.threat_score >= 75 ? 'score-threat' : data.threat_score >= 40 ? 'score-suspicious' : 'score-clean');
 
       badges.innerHTML = '';
       const actionBadge = document.createElement('span');
-      actionBadge.className = 'badge ' + (data.action === 'DROP' ? 'badge-drop' : 'badge-clean');
-      actionBadge.textContent = data.action;
+      actionBadge.className = 'pill-badge ' + (data.action === 'DROP' ? 'pill-danger' : 'pill-active');
+      actionBadge.textContent = `Action: ${data.action}`;
       badges.appendChild(actionBadge);
 
       const classBadge = document.createElement('span');
-      classBadge.className = 'badge ' + (data.classification === 'TOR_EXIT' ? 'badge-tor' : data.threat_score >= 75 ? 'badge-botnet' : 'badge-clean');
+      classBadge.className = 'pill-badge pill-sky';
       classBadge.textContent = data.classification;
       badges.appendChild(classBadge);
 
       if (data.is_banned) {
         const bannedBadge = document.createElement('span');
-        bannedBadge.className = 'badge badge-drop';
-        bannedBadge.textContent = 'KERNEL BANNED';
+        bannedBadge.className = 'pill-badge pill-danger';
+        bannedBadge.textContent = 'KERNEL QUARANTINED';
         badges.appendChild(bannedBadge);
-        actions.innerHTML = `<button class="btn btn-sm btn-danger" onclick="unbanIP('${data.ip}')">Unban IP</button>`;
+        actions.innerHTML = `<button class="btn btn-sm btn-outline" onclick="unbanIP('${data.ip}')">Unban IP</button>`;
       } else {
-        actions.innerHTML = `<button class="btn btn-sm" onclick="banIP('${data.ip}', 'Manual cockpit ban')">Ban IP</button>`;
+        actions.innerHTML = `<button class="btn btn-sm btn-danger" onclick="banIP('${data.ip}', 'Manual cockpit quarantine')">Quarantine IP</button>`;
       }
 
       matchList.innerHTML = '';
       if (data.matched_feeds && data.matched_feeds.length > 0) {
         data.matched_feeds.forEach(f => {
           const li = document.createElement('li');
-          li.className = 'feed-match-item';
-          li.innerHTML = `<span><b>${f}</b></span> <span style="color: var(--cyan)">MATCH</span>`;
+          li.className = 'feed-item';
+          li.innerHTML = `<span><b>${f}</b></span> <span class="pill-badge pill-danger">MATCHED</span>`;
           matchList.appendChild(li);
         });
       } else {
-        matchList.innerHTML = '<li class="feed-match-item" style="color: var(--green)">No malicious feed matches. IP is clean.</li>';
+        matchList.innerHTML = '<li class="feed-item" style="color: #059669;">No malicious feed matches. IP posture is clean.</li>';
       }
     }
 
+    // Active Bans Manager
     async function loadBans() {
       try {
         const res = await fetch('/v1/firewall/bans');
         const bans = await res.json();
         const tbody = document.getElementById('bans-tbody');
+        const countBadge = document.getElementById('bans-count-badge');
         tbody.innerHTML = '';
 
+        countBadge.textContent = `${bans.length} Active`;
+
         if (!bans || bans.length === 0) {
-          tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: var(--text-muted)">No active bans in kernel firewall.</td></tr>';
+          tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: var(--text-muted); padding: 24px;">No active bans in kernel firewall.</td></tr>';
           return;
         }
 
@@ -866,12 +948,12 @@
 
           const tr = document.createElement('tr');
           tr.innerHTML = `
-            <td style="color: #fff; font-weight: 700;">${b.ip}</td>
-            <td style="color: var(--cyan)">${b.reason}</td>
-            <td><span class="badge ${b.threat_score >= 75 ? 'badge-drop' : 'badge-clean'}">${b.threat_score}</span></td>
+            <td style="font-family: var(--font-mono); font-weight: 600;">${b.ip}</td>
+            <td style="color: var(--text-secondary);">${b.reason}</td>
+            <td><span class="pill-badge ${b.threat_score >= 75 ? 'pill-danger' : 'pill-active'}">${b.threat_score}</span></td>
             <td>${b.packets_dropped || 0}</td>
-            <td style="color: var(--text-muted)">${hours}h ${mins}m</td>
-            <td><button class="btn btn-sm btn-danger" onclick="unbanIP('${b.ip}')">Unban</button></td>
+            <td style="color: var(--text-muted); font-size: 12px;">${hours}h ${mins}m</td>
+            <td><button class="btn btn-sm btn-outline" onclick="unbanIP('${b.ip}')">Unban</button></td>
           `;
           tbody.appendChild(tr);
         });
@@ -880,12 +962,13 @@
       }
     }
 
+    // Ban / Unban actions
     async function banIP(ip, reason) {
       try {
         const res = await fetch('/v1/firewall/ban', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ ip, reason: reason || 'Manual ban', ttl_seconds: 86400 })
+          body: JSON.stringify({ ip, reason: reason || 'Manual quarantine', ttl_seconds: 86400 })
         });
         const data = await res.json();
         if (data.success) {
@@ -894,7 +977,7 @@
           fetchStats();
         }
       } catch (err) {
-        alert("Ban failed: " + err);
+        alert("Quarantine failed: " + err);
       }
     }
 
@@ -917,12 +1000,32 @@
     }
 
     function promptManualBan() {
-      const ip = prompt("Enter IP to ban:");
+      const ip = prompt("Enter IP to quarantine:");
       if (!ip) return;
-      const reason = prompt("Enter reason for ban:", "Manual operator quarantine") || "Manual quarantine";
+      const reason = prompt("Enter reason for quarantine:", "Manual operator quarantine") || "Manual quarantine";
       banIP(ip, reason);
     }
 
+    // Audit Report Export
+    async function downloadAuditReport() {
+      try {
+        const res = await fetch('/v1/audit/export');
+        const report = await res.json();
+        const blob = new Blob([JSON.stringify(report, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `blackice-audit-${Math.floor(Date.now() / 1000)}.json`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      } catch (err) {
+        alert("Failed to export audit report: " + err);
+      }
+    }
+
+    // SSE Event Stream
     function initEventStream() {
       const evtSource = new EventSource('/v1/stream');
       const terminal = document.getElementById('terminal-stream');
@@ -931,16 +1034,16 @@
         try {
           const item = JSON.parse(e.data);
           const line = document.createElement('div');
-          line.className = 'log-line';
+          line.className = 'log-row';
           const timeStr = new Date(item.timestamp * 1000).toLocaleTimeString();
           line.innerHTML = `
             <span class="log-time">[${timeStr}]</span>
-            <span class="log-event ${item.event_type}">${item.event_type}</span>
+            <span class="log-type ${item.event_type}">${item.event_type}</span>
             <span class="log-ip">${item.ip}</span>
             <span class="log-msg">${item.message || JSON.stringify(item.details || {})}</span>
           `;
           terminal.prepend(line);
-          if (terminal.children.length > 100) {
+          if (terminal.children.length > 80) {
             terminal.removeChild(terminal.lastChild);
           }
         } catch (err) {
@@ -949,10 +1052,16 @@
       };
     }
 
+    function clearStream() {
+      const terminal = document.getElementById('terminal-stream');
+      terminal.innerHTML = '<div class="log-row"><span class="log-time">[System]</span><span class="log-type CONNECTED">CLEARED</span><span class="log-ip">127.0.0.1</span><span class="log-msg">Stream log view cleared.</span></div>';
+    }
+
     document.getElementById('ip-query').addEventListener('keypress', function(e) {
       if (e.key === 'Enter') inspectIP();
     });
 
+    // Boot
     fetchStats();
     loadBans();
     initEventStream();

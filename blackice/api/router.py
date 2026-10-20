@@ -11,6 +11,7 @@ from blackice.core.trie import RadixTrie
 from blackice.firewall.driver import FirewallDriver
 
 COCKPIT_HTML_PATH = Path(__file__).resolve().parent.parent / "ui" / "cockpit.html"
+SHOWCASE_HTML_PATH = Path(__file__).resolve().parent.parent / "ui" / "showcase.html"
 
 
 class ApiRouter:
@@ -30,6 +31,7 @@ class ApiRouter:
         self.driver_name = driver_name
         self.broadcast = event_broadcaster
         self._cockpit_html = ""
+        self._showcase_html = ""
         self._load_cockpit()
 
     def _load_cockpit(self) -> None:
@@ -38,12 +40,20 @@ class ApiRouter:
         else:
             self._cockpit_html = "<h1>BlackICE Cockpit</h1>"
 
+        if SHOWCASE_HTML_PATH.exists():
+            self._showcase_html = SHOWCASE_HTML_PATH.read_text(encoding="utf-8")
+        else:
+            self._showcase_html = self._cockpit_html
+
     def handle_get(self, path: str) -> tuple[int, str, bytes]:
         parsed = urllib.parse.urlparse(path)
         clean_path = parsed.path.rstrip("/")
 
         if clean_path in ("", "/cockpit"):
             return 200, "text/html; charset=utf-8", self._cockpit_html.encode("utf-8")
+
+        if clean_path in ("/showcase", "/demo"):
+            return 200, "text/html; charset=utf-8", self._showcase_html.encode("utf-8")
 
         if clean_path == "/health":
             body = json.dumps({"status": "ok", "version": "1.0.0"}).encode("utf-8")
@@ -63,6 +73,25 @@ class ApiRouter:
             body = json.dumps(bans).encode("utf-8")
             return 200, "application/json", body
 
+        if clean_path == "/v1/audit/export":
+            import hashlib
+            import time
+            stats = self.db.get_stats()
+            bans = self.db.get_active_bans()
+            report_data = {
+                "generated_at": time.time(),
+                "system": "BLACKICE Sentinel Threat Defense",
+                "version": "1.0.0",
+                "driver": self.driver_name,
+                "stats": stats,
+                "active_bans_count": len(bans),
+                "active_bans": bans,
+            }
+            serialized = json.dumps(report_data, sort_keys=True)
+            report_data["sha256_hash"] = hashlib.sha256(serialized.encode("utf-8")).hexdigest()
+            body = json.dumps(report_data, indent=2).encode("utf-8")
+            return 200, "application/json", body
+
         if clean_path.startswith("/v1/intel/"):
             ip_str = clean_path.replace("/v1/intel/", "")
             return self._handle_intel(ip_str)
@@ -70,12 +99,20 @@ class ApiRouter:
         return 404, "application/json", json.dumps({"error": "Endpoint not found"}).encode("utf-8")
 
     def _handle_intel(self, ip_str: str) -> tuple[int, str, bytes]:
+        import socket
         matches = self.trie.lookup_all(ip_str)
         verdict = self.scorer.evaluate(ip_str, matches)
         is_banned = self.firewall.is_banned(ip_str)
 
+        hostname = None
+        try:
+            hostname = socket.gethostbyaddr(ip_str)[0]
+        except Exception:
+            hostname = None
+
         resp = {
             "ip": verdict.ip,
+            "hostname": hostname,
             "threat_score": verdict.threat_score,
             "classification": verdict.classification,
             "action": verdict.action,

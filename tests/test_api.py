@@ -60,6 +60,13 @@ def test_api_router_endpoints() -> None:
         assert stats["driver"] == "mock"
         assert stats["active_bans"] >= 1
 
+        # Audit Export
+        code, ctype, body = router.handle_get("/v1/audit/export")
+        assert code == 200
+        audit = json.loads(body)
+        assert "sha256_hash" in audit
+        assert audit["system"].startswith("BLACKICE")
+
         # Unban IP
         unban_payload = json.dumps({"ip": "203.0.113.5"}).encode("utf-8")
         code, ctype, body = router.handle_post("/v1/firewall/unban", unban_payload)

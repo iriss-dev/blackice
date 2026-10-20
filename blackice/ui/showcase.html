@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BLACKICE — Autonomous Ingress Defense & Local Sentinel</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Source+Serif+Pro:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+  
+  <style>
+    :root {
+      /* Notion Design Tokens */
+      --color-notion-blue: #0075de;
+      --color-paper-warmth: #f6f5f4;
+      --color-pure-white: #ffffff;
+      --color-ink-black: #000000;
+      --color-charcoal: #111111;
+      --color-stone: #757575;
+      --color-graphite: #615d59;
+      --color-slate: #696969;
+      --color-sky-tint: #e6f3fe;
+      --color-marigold: #ffb110;
+      --color-coral: #f64932;
+      --color-saffron: #e89d01;
+      --color-vermillion: #e32d14;
+      --color-mocha: #b18164;
+      --color-signal-blue: #097fe8;
+      --color-sky-wash: #62aef0;
+      --color-midnight-ink: #02093a;
+
+      /* Typography */
+      --font-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      --font-serif: 'Source Serif Pro', Georgia, serif;
+      --font-mono: 'JetBrains Mono', monospace;
+
+      /* Shapes */
+      --radius-cards: 12px;
+      --radius-buttons: 8px;
+      --radius-pills: 9999px;
+      --radius-small: 4px;
+      --border-hairline: rgba(0, 0, 0, 0.08);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background-color: var(--color-paper-warmth);
+      color: var(--color-ink-black);
+      font-family: var(--font-sans);
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Fixed Sticky Nav (64px) */
+    nav.notion-navbar {
+      position: sticky;
+      top: 0;
+      height: 64px;
+      background: rgba(246, 245, 244, 0.92);
+      backdrop-filter: blur(8px);
+      border-bottom: 1px solid var(--border-hairline);
+      z-index: 1000;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 40px;
+    }
+
+    .nav-brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      text-decoration: none;
+      color: var(--color-ink-black);
+      font-weight: 700;
+      font-size: 17px;
+      letter-spacing: -0.3px;
+    }
+
+    .brand-cube {
+      width: 32px;
+      height: 32px;
+      background: var(--color-midnight-ink);
+      color: #fff;
+      border-radius: var(--radius-small);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 15px;
+    }
+
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 24px;
+    }
+
+    .nav-link {
+      color: rgba(0, 0, 0, 0.6);
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 500;
+      transition: color 200ms ease;
+    }
+    .nav-link:hover {
+      color: var(--color-ink-black);
+    }
+
+    /* Buttons */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-family: var(--font-sans);
+      font-size: 14px;
+      font-weight: 500;
+      padding: 6px 15px;
+      border-radius: var(--radius-buttons);
+      text-decoration: none;
+      cursor: pointer;
+      border: none;
+      transition: opacity 200ms ease, background 200ms ease;
+    }
+    .btn-primary {
+      background: var(--color-notion-blue);
+      color: #ffffff;
+    }
+    .btn-primary:hover { opacity: 0.92; }
+
+    .btn-ghost {
+      background: var(--color-sky-tint);
+      color: var(--color-notion-blue);
+    }
+    .btn-ghost:hover { background: #dbeafe; }
+
+    /* Hero Section */
+    section.hero {
+      max-width: 1200px;
+      margin: 80px auto 40px;
+      text-align: center;
+      padding: 0 24px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    /* Avatars row */
+    .character-row {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      margin-bottom: 28px;
+    }
+
+    .char-mark {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      border: 2px solid;
+    }
+
+    .hero-h1 {
+      font-size: 64px;
+      font-weight: 700;
+      line-height: 1.1;
+      letter-spacing: -2px;
+      color: var(--color-ink-black);
+      max-width: 900px;
+      margin-bottom: 20px;
+    }
+
+    .hero-pill {
+      display: inline-block;
+      background: #f6d5b8;
+      color: #000;
+      border-radius: var(--radius-pills);
+      padding: 6px 24px;
+      letter-spacing: -1.2px;
+      font-size: 56px;
+      vertical-align: middle;
+    }
+
+    .hero-sub {
+      font-family: var(--font-serif);
+      font-size: 20px;
+      color: var(--color-graphite);
+      line-height: 1.56;
+      max-width: 720px;
+      margin-bottom: 32px;
+    }
+
+    .hero-cta-row {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 56px;
+    }
+
+    /* Product UI Mockup (with drop shadow) */
+    .product-mockup-wrapper {
+      max-width: 1100px;
+      width: 100%;
+      background: var(--color-pure-white);
+      border-radius: 12px;
+      border: 1px solid var(--border-hairline);
+      box-shadow: 0px 4px 20px rgba(0, 0, 0, 0.08);
+      overflow: hidden;
+      margin-bottom: 80px;
+    }
+
+    .mockup-bar {
+      height: 38px;
+      background: rgba(0, 0, 0, 0.02);
+      border-bottom: 1px solid var(--border-hairline);
+      display: flex;
+      align-items: center;
+      padding: 0 16px;
+      gap: 8px;
+    }
+
+    .mockup-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: rgba(0, 0, 0, 0.15);
+    }
+
+    .mockup-content {
+      padding: 24px;
+      text-align: left;
+    }
+
+    /* Feature Cards Section */
+    section.features-section {
+      max-width: 1200px;
+      margin: 0 auto 80px;
+      padding: 0 24px;
+    }
+
+    .section-headline {
+      font-size: 40px;
+      font-weight: 700;
+      letter-spacing: -1.4px;
+      margin-bottom: 12px;
+      text-align: center;
+    }
+
+    .section-editorial {
+      font-family: var(--font-serif);
+      font-size: 18px;
+      color: var(--color-graphite);
+      text-align: center;
+      margin-bottom: 48px;
+    }
+
+    .cards-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+    }
+
+    .feature-card {
+      background: var(--color-pure-white);
+      border: 1px solid var(--border-hairline);
+      border-radius: var(--radius-cards);
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .feature-card-accent-yellow {
+      background: var(--color-marigold);
+      color: #000;
+      border: none;
+    }
+
+    .feature-card-accent-dark {
+      background: var(--color-midnight-ink);
+      color: #fff;
+      border: none;
+    }
+
+    .feature-card-accent-blue {
+      background: var(--color-signal-blue);
+      color: #fff;
+      border: none;
+    }
+
+    .card-h3 {
+      font-size: 20px;
+      font-weight: 700;
+      letter-spacing: -0.3px;
+    }
+
+    .card-body {
+      font-size: 15px;
+      line-height: 1.5;
+    }
+
+    .pill-tag {
+      display: inline-block;
+      padding: 3px 10px;
+      border-radius: var(--radius-pills);
+      font-size: 12px;
+      font-weight: 600;
+      width: fit-content;
+    }
+
+    /* Footer */
+    footer.showcase-footer {
+      border-top: 1px solid var(--border-hairline);
+      padding: 40px 24px;
+      text-align: center;
+      font-size: 14px;
+      color: var(--color-stone);
+    }
+
+    @media (max-width: 900px) {
+      .hero-h1 { font-size: 44px; }
+      .hero-pill { font-size: 38px; }
+      .cards-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- 64px Notion Sticky Navigation -->
+  <nav class="notion-navbar">
+    <a href="/" class="nav-brand">
+      <div class="brand-cube">❄️</div>
+      <span>BLACKICE</span>
+    </a>
+
+    <div class="nav-links">
+      <a href="/cockpit" class="nav-link">Live Cockpit</a>
+      <a href="https://github.com/iriss-dev/blackice" target="_blank" class="nav-link">GitHub</a>
+      <a href="/v1/stats" class="nav-link">API Telemetry</a>
+      <a href="/cockpit" class="btn btn-primary">Open Sentinel Console</a>
+    </div>
+  </nav>
+
+  <!-- Hero Section -->
+  <section class="hero">
+    <div class="character-row">
+      <div class="char-mark" style="border-color: #097fe8;">🛡️</div>
+      <div class="char-mark" style="border-color: #f64932;">⚡</div>
+      <div class="char-mark" style="border-color: #ffb110;">❄️</div>
+      <div class="char-mark" style="border-color: #62aef0;">🔒</div>
+      <div class="char-mark" style="border-color: #02093a;">📡</div>
+    </div>
+
+    <h1 class="hero-h1">
+      Autonomous Ingress Defense &
+      <span class="hero-pill">Local Sentinel</span>
+    </h1>
+
+    <p class="hero-sub">
+      Sub-millisecond packet evaluation with radix-tree CIDR matching, autonomous threat scoring, and zero-trust nftables drops on Linux servers.
+    </p>
+
+    <div class="hero-cta-row">
+      <a href="/cockpit" class="btn btn-primary" style="padding: 10px 22px; font-size: 15px;">Launch Cockpit Dashboard ➔</a>
+      <a href="https://github.com/iriss-dev/blackice" target="_blank" class="btn btn-ghost" style="padding: 10px 22px; font-size: 15px;">View Source on GitHub</a>
+    </div>
+
+    <!-- Product UI Mockup (with drop-shadow) -->
+    <div class="product-mockup-wrapper">
+      <div class="mockup-bar">
+        <div class="mockup-dot"></div>
+        <div class="mockup-dot"></div>
+        <div class="mockup-dot"></div>
+        <span style="font-size: 12px; color: var(--color-stone); font-family: var(--font-mono); margin-left: 8px;">blackice-sentinel — http://127.0.0.1:8443/cockpit</span>
+      </div>
+      <div class="mockup-content">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+          <div>
+            <div style="font-size: 18px; font-weight: 700;">Live Kernel Defense Telemetry</div>
+            <div style="font-size: 13px; color: var(--color-stone);">Synchronized with Linux nftables kernel set</div>
+          </div>
+          <span class="pill-tag" style="background: #ecfdf5; color: #065f46; border: 1px solid #a7f3d0;">● Operational (0.04ms)</span>
+        </div>
+
+        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 20px;">
+          <div style="background: #f6f5f4; padding: 12px; border-radius: 8px; border: 1px solid rgba(0,0,0,0.06);">
+            <div style="font-size: 11px; color: var(--color-stone);">THREATS INDEXED</div>
+            <div style="font-size: 20px; font-weight: 700;">834,192</div>
+          </div>
+          <div style="background: #f6f5f4; padding: 12px; border-radius: 8px; border: 1px solid rgba(0,0,0,0.06);">
+            <div style="font-size: 11px; color: var(--color-stone);">KERNEL DROPS</div>
+            <div style="font-size: 20px; font-weight: 700; color: #b91c1c;">14,290</div>
+          </div>
+          <div style="background: #f6f5f4; padding: 12px; border-radius: 8px; border: 1px solid rgba(0,0,0,0.06);">
+            <div style="font-size: 11px; color: var(--color-stone);">ACTIVE BANS</div>
+            <div style="font-size: 20px; font-weight: 700;">412</div>
+          </div>
+          <div style="background: #f6f5f4; padding: 12px; border-radius: 8px; border: 1px solid rgba(0,0,0,0.06);">
+            <div style="font-size: 11px; color: var(--color-stone);">FEEDS SYNCED</div>
+            <div style="font-size: 20px; font-weight: 700; color: #047857;">4/4 OK</div>
+          </div>
+        </div>
+
+        <div style="background: #f6f5f4; border: 1px solid rgba(0,0,0,0.08); border-radius: 8px; padding: 12px 16px; font-family: var(--font-mono); font-size: 13px; display: flex; align-items: center; justify-content: space-between;">
+          <span><code>185.220.101.5</code> ➔ Threat Score: <b>100/100</b> [TOR_EXIT_NODE]</span>
+          <span class="pill-tag" style="background: #fee2e2; color: #991b1b;">QUARANTINED (DROP)</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Features Grid -->
+  <section class="features-section">
+    <h2 class="section-headline">Architected for Speed, Designed for Clarity</h2>
+    <p class="section-editorial">No cloud bloat, no third-party telemetry leaks. Everything runs 100% locally on your server.</p>
+
+    <div class="cards-grid">
+      <!-- White Feature Card -->
+      <div class="feature-card">
+        <span class="pill-tag" style="background: #e6f3fe; color: #0075de;">830k lookups/sec</span>
+        <h3 class="card-h3">Bitwise Radix-Tree Matching</h3>
+        <p class="card-body" style="color: var(--color-graphite);">
+          Evaluates ingress IP addresses in less than <b>0.005 ms</b> directly in system memory using optimized bitwise 32-bit integer prefix tries.
+        </p>
+      </div>
+
+      <!-- Accent Feature Card: Yellow -->
+      <div class="feature-card feature-card-accent-yellow">
+        <span class="pill-tag" style="background: #000; color: #fff;">Kernel Ingress</span>
+        <h3 class="card-h3">Native nftables Firewall Drop</h3>
+        <p class="card-body">
+          Offloads active blocks straight into Linux kernel sets. Dropped packets are discarded at the NIC layer before hitting userspace.
+        </p>
+      </div>
+
+      <!-- Dark Feature Card: Midnight Ink -->
+      <div class="feature-card feature-card-accent-dark">
+        <span class="pill-tag" style="background: var(--color-notion-blue); color: #fff;">Zero-Trust</span>
+        <h3 class="card-h3">Cryptographic Hash Chains</h3>
+        <p class="card-body" style="color: #cbd5e1;">
+          Every ban event, operator action, and feed update is signed into a tamper-evident audit log stamped with SHA-256 Merkle hashes.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Editorial Footer -->
+  <footer class="showcase-footer">
+    <div><b>BLACKICE</b> // Sentinel Threat Defense Engine · Crafted by <a href="https://github.com/iriss-dev" target="_blank" style="color: inherit;">Iris (@iriss-dev)</a></div>
+    <div style="margin-top: 4px;">Distributed under the GNU General Public License v3.0 · Built with Notion Style System</div>
+  </footer>
+
+</body>
+</html>

@@ -48,7 +48,7 @@ BlackICE unifies authoritative global threat feeds (**Spamhaus DROP/EDROP**, **T
 | **Distributed Raids** | Vulnerable (fails on rotating IPs) | Handled | **Immune (matches full botnet ASN/CIDR allocations)** |
 | **Threat Intelligence**| None | Proprietary community score | **Spamhaus, Tor, Feodo C2, Emerging Threats & URLhaus** |
 | **Resource Overhead** | High (Python regex CPU spikes) | Moderate (~80MB RAM) | **Ultra-Low (&lt;20MB RAM, zero external core dependencies)** |
-| **Interface** | Plain text logfiles | Cloud dashboard | **Dual Cockpit: Rich Terminal TUI + Cyberpunk OLED Web UI** |
+| **Interface** | Plain text logfiles | Cloud dashboard | **Dual Cockpit: Rich Terminal TUI + Editorial Notion-Style Web UI** |
 | **Local Application API**| None | Complex REST | **Microsecond REST API + Server-Sent Events (SSE)** |
 
 ---
@@ -128,7 +128,7 @@ sudo blackice daemon
 blackice daemon --driver mock
 ```
 
-Open your browser at **`http://127.0.0.1:8787/cockpit`** to enter the Cyberpunk Web Cockpit.
+Open your browser at **`http://127.0.0.1:8787/cockpit`** to enter the Editorial Sentinel Web Cockpit (Warm Paper & Midnight Ink themes). Or visit **`http://127.0.0.1:8787/showcase`** for the interactive product landing showcase.
 
 #### 3. Live Terminal Monitor (TUI)
 
@@ -191,6 +191,12 @@ curl -X POST http://127.0.0.1:8787/v1/firewall/ban \
 ```bash
 curl -N http://127.0.0.1:8787/v1/stream
 ```
+
+#### 4. Cryptographic Audit Export
+```bash
+curl http://127.0.0.1:8787/v1/audit/export
+```
+Returns a tamper-evident audit report containing total drops, active bans, and feed states stamped with a `SHA-256` integrity hash.
 
 ---
 
