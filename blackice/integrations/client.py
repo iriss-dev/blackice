@@ -8,6 +8,7 @@ from typing import Any, Dict, Optional
 class BlackIceClient:
     """
     Python client for querying local or remote BlackICE threat sentinels.
+    Includes support for Multi-Engine Consensus, Canary Traps, and Payload Entropy.
     """
 
     def __init__(self, base_url: str = "http://127.0.0.1:8787", timeout: float = 1.0) -> None:
@@ -28,6 +29,44 @@ class BlackIceClient:
                 "action": "PASS",
                 "daemon_error": str(e),
             }
+
+    def inspect_consensus(
+        self,
+        ip: str = "127.0.0.1",
+        path: str = "/",
+        payload: str = "",
+        user_agent: str = "blackice-python-sdk",
+        auto_ban: bool = False,
+    ) -> Dict[str, Any]:
+        """
+        Runs VirusTotal-style Multi-Engine Consensus evaluation across Feeds, Canary,
+        Entropy, and Client Heuristics.
+        """
+        url = f"{self.base_url}/v1/consensus/inspect"
+        body = json.dumps({
+            "ip": ip,
+            "path": path,
+            "payload": payload,
+            "user_agent": user_agent,
+            "auto_ban": auto_ban,
+        }).encode("utf-8")
+        req = urllib.request.Request(url, data=body, headers={"Content-Type": "application/json"})
+        try:
+            with urllib.request.urlopen(req, timeout=self.timeout) as resp:
+                return json.loads(resp.read().decode("utf-8"))
+        except Exception as e:
+            return {"error": str(e), "verdict": "OFFLINE_PASS", "action": "PASS"}
+
+    def inspect_payload(self, text: str) -> Dict[str, Any]:
+        """Inspects string for Shannon entropy and dangerous exploit patterns."""
+        url = f"{self.base_url}/v1/payload/inspect"
+        body = json.dumps({"payload": text}).encode("utf-8")
+        req = urllib.request.Request(url, data=body, headers={"Content-Type": "application/json"})
+        try:
+            with urllib.request.urlopen(req, timeout=self.timeout) as resp:
+                return json.loads(resp.read().decode("utf-8"))
+        except Exception as e:
+            return {"error": str(e), "is_suspicious": False, "threat_score": 0}
 
     def ban(self, ip: str, reason: str = "Client ban", ttl_seconds: int = 86400) -> bool:
         url = f"{self.base_url}/v1/firewall/ban"

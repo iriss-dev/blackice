@@ -1,6 +1,7 @@
 /**
  * BlackICE client for Discord bots (discord.js) & Node.js backend services.
- * Connects to local BlackICE daemon on 127.0.0.1:8787 for <0.1ms threat intelligence.
+ * Connects to local BlackICE daemon on 127.0.0.1:8787 for <0.1ms threat intelligence
+ * and VirusTotal-style Multi-Engine Consensus scoring.
  * Safe fallback: never throws or blocks if daemon is temporarily offline.
  *
  * (C) 2026 Iris (iriss-dev) - GPL-3.0-or-later
@@ -32,13 +33,18 @@ class BlackIceClient {
       }
 
       const data = await res.json();
+      const consensus = data.consensus || {};
+
       return {
         ip: data.ip,
-        isThreat: data.threat_score >= 75,
+        isThreat: (data.threat_score >= 75) || (consensus.verdict === 'MALICIOUS'),
         threatScore: data.threat_score,
         classification: data.classification,
         action: data.action,
         confidence: data.confidence,
+        ratio: consensus.ratio || '0/4',
+        detectionRate: consensus.detection_rate || 0,
+        consensus: consensus,
         matchedFeeds: data.matched_feeds || [],
         isTor: data.classification === 'TOR_EXIT' || (data.matched_feeds || []).includes('tor_exits'),
         isBotnet: data.classification === 'BOTNET_C2' || (data.matched_feeds || []).includes('feodo_tracker'),
@@ -53,6 +59,44 @@ class BlackIceClient {
         action: 'PASS',
         daemonOffline: true,
       };
+    } finally {
+      clearTimeout(timeout);
+    }
+  }
+
+  /**
+   * Evaluates text/message content for phishing URLs, high-entropy tokens, and exploit patterns.
+   * Useful for Discord bot chat moderation & automod.
+   */
+  async inspectPayload(text) {
+    if (!text || typeof text !== 'string') {
+      return { isSuspicious: false, threatScore: 0, entropy: 0.0 };
+    }
+
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), this.timeoutMs);
+
+    try {
+      const res = await fetch(`${this.baseUrl}/v1/payload/inspect`, {
+        method: 'POST',
+        signal: controller.signal,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ payload: text }),
+      });
+
+      if (!res.ok) {
+        return { isSuspicious: false, threatScore: 0, entropy: 0.0 };
+      }
+
+      const data = await res.json();
+      return {
+        isSuspicious: data.is_suspicious,
+        threatScore: data.threat_score,
+        entropy: data.shannon_entropy,
+        patterns: data.suspicious_patterns || [],
+      };
+    } catch {
+      return { isSuspicious: false, threatScore: 0, entropy: 0.0, daemonOffline: true };
     } finally {
       clearTimeout(timeout);
     }

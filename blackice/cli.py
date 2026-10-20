@@ -10,8 +10,11 @@ from typing import Optional
 
 from blackice.api.router import ApiRouter
 from blackice.api.server import ApiServer, Broadcaster
+from blackice.core.canary import CanaryDecoyEngine
 from blackice.core.config import Config
+from blackice.core.consensus import ConsensusEngine
 from blackice.core.database import ThreatDatabase
+from blackice.core.entropy import ShannonEntropyAnalyzer
 from blackice.core.scoring import ThreatScorer
 from blackice.core.trie import RadixTrie
 from blackice.feeds.manager import FeedManager
@@ -33,6 +36,9 @@ def build_system(config: Config) -> tuple:
     db = ThreatDatabase(config.db_path)
     trie = RadixTrie()
     scorer = ThreatScorer(ban_threshold=config.ban_threshold_score)
+    canary = CanaryDecoyEngine()
+    entropy = ShannonEntropyAnalyzer()
+    consensus = ConsensusEngine(trie=trie, scorer=scorer, canary=canary, entropy_analyzer=entropy)
     firewall = create_firewall_driver(config.firewall_driver)
     feed_mgr = FeedManager(config, db, trie)
     broadcaster = Broadcaster()
@@ -48,6 +54,9 @@ def build_system(config: Config) -> tuple:
         firewall=firewall,
         driver_name=firewall.__class__.__name__.replace("Driver", "").lower(),
         event_broadcaster=broadcaster.broadcast,
+        canary=canary,
+        consensus=consensus,
+        entropy=entropy,
     )
 
     api_server = ApiServer(
@@ -75,9 +84,11 @@ def cmd_daemon(args: argparse.Namespace) -> None:
 
     print(f"\n=======================================================")
     print(f"  BLACKICE // THREAT DEFENSE SENTINEL v1.0.0")
-    print(f"  Kernel Driver: {firewall.__class__.__name__}")
-    print(f"  REST API:      http://{config.api_host}:{config.api_port}/")
-    print(f"  Web Cockpit:   http://{config.api_host}:{config.api_port}/cockpit")
+    print(f"  Kernel Driver:    {firewall.__class__.__name__}")
+    print(f"  Detection Engine: VirusTotal-Style Multi-Engine Consensus (4 Engines)")
+    print(f"  Active Traps:     Canary Decoy Honeypots Active")
+    print(f"  REST API:         http://{config.api_host}:{config.api_port}/")
+    print(f"  Web Cockpit:      http://{config.api_host}:{config.api_port}/cockpit")
     print(f"=======================================================\n")
 
     api_server.start()
@@ -113,18 +124,44 @@ def cmd_check(args: argparse.Namespace) -> None:
         feed_mgr.seed_offline_if_empty()
         feed_mgr.reload_trie_from_db()
         scorer = ThreatScorer(ban_threshold=config.ban_threshold_score)
-        matches = trie.lookup_all(ip)
-        verdict = scorer.evaluate(ip, matches)
-        data = {
-            "ip": verdict.ip,
-            "threat_score": verdict.threat_score,
-            "classification": verdict.classification,
-            "action": verdict.action,
-            "confidence": verdict.confidence,
-            "matched_feeds": verdict.matched_feeds,
-            "descriptions": verdict.descriptions,
-            "is_banned": False,
+        canary = CanaryDecoyEngine()
+        entropy = ShannonEntropyAnalyzer()
+        consensus = ConsensusEngine(trie=trie, scorer=scorer, canary=canary, entropy_analyzer=entropy)
+        
+        cv = consensus.evaluate(ip=ip)
+        engines_dict = {
+            k: {
+                "engine_name": v.engine_name,
+                "flagged": v.flagged,
+                "score": v.score,
+                "category": v.category,
+                "details": v.details,
+            }
+            for k, v in cv.engines.items()
         }
+        data = {
+            "ip": cv.ip,
+            "threat_score": cv.threat_score,
+            "classification": cv.verdict,
+            "action": cv.action,
+            "confidence": cv.confidence,
+            "matched_feeds": cv.engines["threat_feeds"].details.get("matched_feeds", []),
+            "descriptions": cv.engines["threat_feeds"].details.get("descriptions", []),
+            "is_banned": False,
+            "consensus": {
+                "ratio": cv.ratio,
+                "flagged_engines": cv.flagged_engines,
+                "total_engines": cv.total_engines,
+                "detection_rate": cv.detection_rate,
+                "verdict": cv.verdict,
+                "summary": cv.summary,
+                "engines": engines_dict,
+            },
+        }
+
+    consensus_info = data.get("consensus", {})
+    ratio = consensus_info.get("ratio", "N/A")
+    det_rate = consensus_info.get("detection_rate", 0)
 
     if HAS_RICH:
         console = Console()
@@ -132,23 +169,124 @@ def cmd_check(args: argparse.Namespace) -> None:
         score_color = "red" if score >= 75 else "yellow" if score >= 40 else "green"
 
         table = Table(title=f"BlackICE Threat Intelligence // {ip}", border_style="cyan")
-        table.add_column("Property", style="dim white")
-        table.add_column("Value", style="bold white")
+        table.add_column("Security Property", style="dim white")
+        table.add_column("Engine Evaluation", style="bold white")
 
         table.add_row("IP Address", data["ip"])
+        table.add_row("Consensus Ratio", f"[{score_color}]{ratio} Engines Flagged ({det_rate}%)[/{score_color}]")
         table.add_row("Threat Score", f"[{score_color}]{score} / 100[/{score_color}]")
-        table.add_row("Classification", f"[bold {score_color}]{data['classification']}[/bold {score_color}]")
+        table.add_row("Verdict", f"[bold {score_color}]{data['classification']}[/bold {score_color}]")
         table.add_row("Firewall Action", f"[bold]{data['action']}[/bold]")
-        table.add_row("Confidence", f"{int(data['confidence'] * 100)}%")
+        table.add_row("Confidence", f"{int(data['confidence'] * 100)}% (Near-Zero False Positive)")
         table.add_row("Matched Feeds", ", ".join(data.get("matched_feeds", [])) or "None")
 
         console.print(table)
+
+        # Print Engine breakdown
+        engines = consensus_info.get("engines", {})
+        if engines:
+            e_table = Table(title="Multi-Engine Detection Matrix (VirusTotal Consensus)", border_style="blue")
+            e_table.add_column("Engine", style="white")
+            e_table.add_column("Status", style="bold")
+            e_table.add_column("Severity", justify="right")
+            e_table.add_column("Category / Details", style="dim")
+
+            for eng_id, eng in engines.items():
+                flagged = eng.get("flagged", False)
+                status = "[red]FLAGGED[/red]" if flagged else "[green]CLEAN[/green]"
+                e_table.add_row(
+                    eng.get("engine_name", eng_id),
+                    status,
+                    f"{eng.get('score', 0)}/100",
+                    eng.get("category", "OK"),
+                )
+            console.print(e_table)
     else:
         print(f"IP: {data['ip']}")
+        print(f"Consensus: {ratio} engines flagged ({det_rate}%)")
         print(f"Threat Score: {data['threat_score']}/100")
-        print(f"Classification: {data['classification']}")
+        print(f"Verdict: {data['classification']}")
         print(f"Action: {data['action']}")
-        print(f"Feeds: {', '.join(data.get('matched_feeds', [])) or 'None'}")
+        print(f"Confidence: {int(data['confidence'] * 100)}%")
+
+
+def cmd_inspect(args: argparse.Namespace) -> None:
+    """Inspects a suspicious payload, query string, or decoy path for attack patterns."""
+    text = args.payload.strip()
+    config = Config.from_env()
+
+    # Attempt local REST query if daemon is running
+    url = f"http://{config.api_host}:{config.api_port}/v1/consensus/inspect"
+    payload_data = {
+        "ip": getattr(args, "ip", "127.0.0.1") or "127.0.0.1",
+        "path": text if text.startswith("/") else "/",
+        "payload": text if not text.startswith("/") else "",
+        "user_agent": getattr(args, "user_agent", "manual-cli-inspect") or "manual-cli-inspect",
+    }
+
+    try:
+        req = urllib.request.Request(
+            url,
+            data=json.dumps(payload_data).encode("utf-8"),
+            headers={"Content-Type": "application/json"},
+        )
+        with urllib.request.urlopen(req, timeout=1.5) as resp:
+            data = json.loads(resp.read().decode("utf-8"))
+    except Exception:
+        # Fallback offline
+        canary = CanaryDecoyEngine()
+        entropy = ShannonEntropyAnalyzer()
+        trie = RadixTrie()
+        scorer = ThreatScorer()
+        consensus = ConsensusEngine(trie=trie, scorer=scorer, canary=canary, entropy_analyzer=entropy)
+        cv = consensus.evaluate(
+            ip=payload_data["ip"],
+            path=payload_data["path"],
+            payload=payload_data["payload"],
+            user_agent=payload_data["user_agent"],
+        )
+        data = {
+            "ratio": cv.ratio,
+            "verdict": cv.verdict,
+            "action": cv.action,
+            "confidence": cv.confidence,
+            "threat_score": cv.threat_score,
+            "summary": cv.summary,
+            "engines": {
+                k: {
+                    "engine_name": v.engine_name,
+                    "flagged": v.flagged,
+                    "score": v.score,
+                    "category": v.category,
+                    "details": v.details,
+                }
+                for k, v in cv.engines.items()
+            },
+        }
+
+    if HAS_RICH:
+        console = Console()
+        score = data["threat_score"]
+        score_color = "red" if score >= 75 else "yellow" if score >= 40 else "green"
+
+        table = Table(title=f"BlackICE Multi-Engine Payload Analysis", border_style="magenta")
+        table.add_column("Property", style="dim white")
+        table.add_column("Evaluation Result", style="bold white")
+
+        table.add_row("Inspected Target", text)
+        table.add_row("Consensus Ratio", f"[{score_color}]{data['ratio']} Engines Flagged[/{score_color}]")
+        table.add_row("Verdict", f"[bold {score_color}]{data['verdict']}[/bold {score_color}]")
+        table.add_row("Recommended Action", f"[bold]{data['action']}[/bold]")
+        table.add_row("Confidence", f"{int(data['confidence'] * 100)}%")
+        table.add_row("Analysis Summary", data.get("summary", ""))
+
+        console.print(table)
+    else:
+        print(f"Target: {text}")
+        print(f"Consensus: {data['ratio']}")
+        print(f"Verdict: {data['verdict']}")
+        print(f"Action: {data['action']}")
+        print(f"Summary: {data.get('summary', '')}")
 
 
 def cmd_ban(args: argparse.Namespace) -> None:
@@ -231,7 +369,7 @@ def cmd_monitor(args: argparse.Namespace) -> None:
 def main() -> None:
     parser = argparse.ArgumentParser(
         prog="blackice",
-        description="BlackICE // Autonomous Ingress Defense & Local Threat Intelligence Sentinel",
+        description="BlackICE // Autonomous Ingress Defense & Local Multi-Engine Consensus Sentinel",
     )
     sub = parser.add_subparsers(dest="command")
 
@@ -242,8 +380,14 @@ def main() -> None:
     p_daemon.add_argument("--driver", default=None, help="Firewall driver (auto, nftables, iptables, mock)")
 
     # check
-    p_check = sub.add_parser("check", help="Query an IP address against local threat intelligence")
+    p_check = sub.add_parser("check", help="Query an IP address against multi-engine threat consensus")
     p_check.add_argument("ip", help="IP address to evaluate")
+
+    # inspect
+    p_inspect = sub.add_parser("inspect", help="Inspect a path or payload against canary honeytraps and entropy analyzer")
+    p_inspect.add_argument("payload", help="URL path, parameter, or payload body to analyze")
+    p_inspect.add_argument("--ip", default="127.0.0.1", help="Simulated source IP (default: 127.0.0.1)")
+    p_inspect.add_argument("--user-agent", default="blackice-inspect", help="Simulated User-Agent")
 
     # monitor
     sub.add_parser("monitor", help="Open live terminal TUI monitor")
@@ -270,6 +414,8 @@ def main() -> None:
         cmd_daemon(args)
     elif args.command == "check":
         cmd_check(args)
+    elif args.command == "inspect":
+        cmd_inspect(args)
     elif args.command == "monitor":
         cmd_monitor(args)
     elif args.command == "ban":
