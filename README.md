@@ -23,7 +23,7 @@
   <a href="#architecture">Architecture</a> •
   <a href="#cockpit-ui">Cockpit UI</a> •
   <a href="#rest-api">REST API</a> •
-  <a href="#axis-discord-bot-integration">Bot Integration</a>
+  <a href="#discord-bot--anti-raid-integration">Bot Integration</a>
 </p>
 
 </div>
@@ -100,7 +100,7 @@ BlackICE unifies authoritative global threat feeds (**Spamhaus DROP/EDROP**, **T
 - 🖥️ **Dual Visual Cockpit**:
   - **Terminal TUI**: Real-time terminal interface powered by `rich` with sparklines, status gauges, and threat logs.
   - **Cyberpunk Web Cockpit**: OLED dark-mode responsive dashboard served directly from memory with Server-Sent Events (SSE).
-- 🤖 **Bot & Microservice Ready**: Instant drop-in integration for Discord/Telegram bots (e.g. Axis), reverse proxies, and auth gates.
+- 🤖 **Bot & Microservice Ready**: Instant drop-in integration for Discord bots, reverse proxies, and auth gates.
 
 ---
 
@@ -194,29 +194,29 @@ curl -N http://127.0.0.1:8787/v1/stream
 
 ---
 
-### Axis Discord Bot Integration
+### Discord Bot & Anti-Raid Integration
 
-Drop `blackice/integrations/axis.js` directly into your security bot or Node.js service:
+Drop the client (`blackice/integrations/discord-bot.js`) directly into your Discord bot (e.g. `discord.js`) to screen incoming members, block automated raid attacks, and isolate botnet proxies:
 
 ```javascript
-const { BlackIceClient } = require('./axis');
+const { BlackIceClient } = require('./discord-bot');
 
 const sentinel = new BlackIceClient({ url: 'http://127.0.0.1:8787' });
 
-// In your member join or raid-screening middleware:
-async function screenIncomingMember(member, ip) {
-  const verdict = await sentinel.check(ip);
+// In your member verification gate or guildMemberAdd handler:
+async function screenIncomingMember(member, clientIp) {
+  const verdict = await sentinel.check(clientIp);
 
   if (verdict.isBotnet || verdict.threatScore >= 75) {
-    console.warn(`[AXIS // BLACKICE] Blocked hostile actor ${member.user.tag} (Score: ${verdict.threatScore})`);
+    console.warn(`[SECURITY] Blocked hostile actor ${member.user.tag} (Threat Score: ${verdict.threatScore})`);
     await member.kick('BlackICE: Hostile network / threat feed match');
-    // Drop in kernel firewall to block further requests from this IP
-    await sentinel.ban(ip, 'Raid mitigation trigger');
+    // Drop future traffic from this IP directly in the kernel firewall
+    await sentinel.ban(clientIp, 'Automated raid mitigation trigger');
     return false;
   }
 
   if (verdict.isTor) {
-    console.info(`[AXIS] Member joined via Tor relay: ${member.user.tag}`);
+    console.info(`[SECURITY] Member connected via Tor exit node: ${member.user.tag}`);
   }
 
   return true;

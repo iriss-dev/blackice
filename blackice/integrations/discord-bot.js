@@ -1,6 +1,6 @@
 /**
- * blackice client for Axis Discord Bot & Node.js services.
- * Connects to local blackice daemon on 127.0.0.1:8787 for <0.1ms threat intelligence.
+ * BlackICE client for Discord bots (discord.js) & Node.js backend services.
+ * Connects to local BlackICE daemon on 127.0.0.1:8787 for <0.1ms threat intelligence.
  * Safe fallback: never throws or blocks if daemon is temporarily offline.
  *
  * (C) 2026 Iris (iriss-dev) - GPL-3.0-or-later
@@ -24,7 +24,7 @@ class BlackIceClient {
     try {
       const res = await fetch(`${this.baseUrl}/v1/intel/${encodeURIComponent(cleanIp)}`, {
         signal: controller.signal,
-        headers: { 'User-Agent': 'Axis-SecurityBot/2.8' },
+        headers: { 'User-Agent': 'blackice-node-client/1.0' },
       });
 
       if (!res.ok) {
@@ -58,7 +58,7 @@ class BlackIceClient {
     }
   }
 
-  async ban(ip, reason = 'Axis bot quarantine', ttlSeconds = 86400) {
+  async ban(ip, reason = 'Automated bot quarantine', ttlSeconds = 86400) {
     try {
       const res = await fetch(`${this.baseUrl}/v1/firewall/ban`, {
         method: 'POST',
