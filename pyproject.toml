@@ -39,7 +39,9 @@ keywords = [
     "tor-detection",
     "radix-trie",
 ]
-dependencies = []
+dependencies = [
+    "cryptography>=41.0.0",
+]
 
 [project.optional-dependencies]
 ui = [
@@ -48,6 +50,7 @@ ui = [
 dev = [
     "pytest>=8.0.0",
     "rich>=13.0.0",
+    "cryptography>=41.0.0",
 ]
 
 [project.scripts]
