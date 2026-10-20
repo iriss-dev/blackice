@@ -121,11 +121,19 @@ pip install -e .[dev]
 #### 2. Start the Sentinel Daemon
 
 ```bash
-# Start background sentinel with web cockpit on :8787
+# Production Linux mode (requires root for nftables/iptables kernel enforcement):
 sudo blackice daemon
 
-# Or run in development/mock mode without root
+# Development, Windows, or non-root testing (mock firewall driver):
 blackice daemon --driver mock
+
+# Direct Python module execution (works anywhere without PATH configuration):
+python -m blackice daemon --driver mock
+# or:
+python -m blackice.cli daemon --driver mock
+
+# Custom bind port (default: 8787):
+python -m blackice daemon --port 8787 --driver mock
 ```
 
 Open your browser at **`http://127.0.0.1:8787/cockpit`** to enter the Editorial Sentinel Web Cockpit (Warm Paper & Midnight Ink themes). Or visit **`http://127.0.0.1:8787/showcase`** for the interactive product landing showcase.
@@ -200,13 +208,41 @@ Returns a tamper-evident audit report containing total drops, active bans, and f
 
 ---
 
-### Discord Bot & Anti-Raid Integration
+### 🔌 60-Second Drop-In Integrations
 
-Drop the client (`blackice/integrations/discord-bot.js`) directly into your Discord bot (e.g. `discord.js`) to screen incoming members, block automated raid attacks, and isolate botnet proxies:
+BlackICE is designed to protect your web servers, APIs, and community bots with zero friction. Drop our ready-made middleware straight into your stack:
 
+#### 1. Express.js (Node.js Web Apps)
 ```javascript
-const { BlackIceClient } = require('./discord-bot');
+const express = require('express');
+const { blackice } = require('./blackice/integrations/express-middleware');
 
+const app = express();
+
+// Automatically drop hostile botnets, scanners & evasion proxies in <0.05ms
+app.use(blackice({ blockThreshold: 75, blockTor: false }));
+
+app.get('/api/data', (req, res) => res.json({ status: 'secure' }));
+```
+
+#### 2. FastAPI & Starlette (Python ASGI)
+```python
+from fastapi import FastAPI
+from blackice.integrations.fastapi_middleware import BlackIceMiddleware
+
+app = FastAPI()
+
+# Intercept hostile traffic before routes execute
+app.add_middleware(BlackIceMiddleware, block_threshold=75)
+
+@app.get("/api/data")
+async def secure_endpoint():
+    return {"status": "protected"}
+```
+
+#### 3. Discord Bots & Anti-Raid Gateways (Node.js)
+```javascript
+const { BlackIceClient } = require('./blackice/integrations/discord-bot');
 const sentinel = new BlackIceClient({ url: 'http://127.0.0.1:8787' });
 
 // In your member verification gate or guildMemberAdd handler:
@@ -214,15 +250,11 @@ async function screenIncomingMember(member, clientIp) {
   const verdict = await sentinel.check(clientIp);
 
   if (verdict.isBotnet || verdict.threatScore >= 75) {
-    console.warn(`[SECURITY] Blocked hostile actor ${member.user.tag} (Threat Score: ${verdict.threatScore})`);
-    await member.kick('BlackICE: Hostile network / threat feed match');
+    console.warn(`[SECURITY] Blocked hostile actor ${member.user.tag} (Score: ${verdict.threatScore})`);
+    await member.kick('BlackICE: Hostile network / botnet match');
     // Drop future traffic from this IP directly in the kernel firewall
     await sentinel.ban(clientIp, 'Automated raid mitigation trigger');
     return false;
-  }
-
-  if (verdict.isTor) {
-    console.info(`[SECURITY] Member connected via Tor exit node: ${member.user.tag}`);
   }
 
   return true;
