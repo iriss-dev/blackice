@@ -1,0 +1,38 @@
+{
+  "name": "blackice-mcp",
+  "version": "1.0.0",
+  "description": "Zero-Trust Threat Intelligence & Multi-Engine Consensus MCP Server for AI Agents (Cursor, Claude, Windsurf, Antigravity)",
+  "main": "index.js",
+  "bin": {
+    "blackice-mcp": "./bin/cli.js"
+  },
+  "scripts": {
+    "start": "node ./bin/cli.js",
+    "test": "node test/test.js"
+  },
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "claude",
+    "cursor",
+    "windsurf",
+    "antigravity",
+    "ai-agents",
+    "agent-skills",
+    "cybersecurity",
+    "threat-intelligence",
+    "virustotal",
+    "shannon-entropy",
+    "zero-trust"
+  ],
+  "author": "iriss-dev",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/iriss-dev/blackice.git",
+    "directory": "integrations/blackice-mcp"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

@@ -405,6 +405,9 @@ def main() -> None:
     # sync
     sub.add_parser("sync", help="Synchronize threat intelligence feeds immediately")
 
+    # mcp
+    sub.add_parser("mcp", help="Launch Model Context Protocol (MCP) server over stdio for AI Agents (Cursor, Claude, Windsurf)")
+
     args = parser.parse_args()
     if not args.command:
         parser.print_help()
@@ -424,6 +427,10 @@ def main() -> None:
         cmd_unban(args)
     elif args.command == "sync":
         cmd_sync(args)
+    elif args.command == "mcp":
+        from blackice.mcp.server import BlackIceMCPServer
+        server = BlackIceMCPServer()
+        server.run_stdio()
 
 
 if __name__ == "__main__":

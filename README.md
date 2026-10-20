@@ -148,7 +148,55 @@ blackice unban 198.51.100.22
 
 # 5. Synchronize threat feeds from authoritative sources
 blackice sync
+
+# 6. Launch Model Context Protocol (MCP) server for AI Agents
+blackice mcp
 ```
+
+---
+
+### 🤖 Model Context Protocol (MCP) Server for AI Agents
+
+BlackICE includes a native **Model Context Protocol (MCP)** server that allows autonomous AI coding agents (**Cursor, Claude Desktop, Windsurf, Antigravity**) to leverage BlackICE's multi-engine consensus and zero-trust threat verification directly during pair-programming and code generation.
+
+#### 1-Click Agent Setup
+
+Add to your `claude_desktop_config.json` or `.cursor/mcp.json`:
+
+```json
+{
+  "mcpServers": {
+    "blackice": {
+      "command": "npx",
+      "args": ["-y", "blackice-mcp"]
+    }
+  }
+}
+```
+
+Or via Python:
+
+```json
+{
+  "mcpServers": {
+    "blackice": {
+      "command": "python",
+      "args": ["-m", "blackice.mcp"]
+    }
+  }
+}
+```
+
+#### Exposed Agent Tools
+
+| MCP Tool | Capability |
+| :--- | :--- |
+| `blackice_scan_url` | Analyzes external URLs for phishing, scam lures, and malicious TLD entropy before the agent visits or fetches. |
+| `blackice_analyze_content` | Inspects code or payloads for Shannon entropy, obfuscated base64/hex, zero-width steganography, and prompt-injection tripwires. |
+| `blackice_scan_ip` | Evaluates IPs against Spamhaus, Tor Exits, Feodo Botnet C2, and Datacenter CIDRs. |
+| `blackice_consensus_verdict` | Runs 4-way Bayesian consensus across threat engines to produce an authoritative `PASS`, `MONITOR`, or `DROP` verdict. |
+| `blackice_scan_hash` | Checks cryptographic file hashes (SHA256, MD5, SHA1) against signature caches. |
+| `blackice_security_report` | Generates a certified executive Markdown threat audit report for the user. |
 
 ---
 
