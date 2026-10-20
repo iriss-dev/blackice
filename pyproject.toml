@@ -1,0 +1,71 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "blackice-guard"
+version = "1.0.0"
+description = "Autonomous Linux Ingress Defense & Local Threat Intelligence Sentinel"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "GPL-3.0-or-later" }
+authors = [
+    { name = "Iris", email = "iriss.smith08@proton.me" }
+]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: System Administrators",
+    "Intended Audience :: Information Technology",
+    "License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)",
+    "Operating System :: POSIX :: Linux",
+    "Operating System :: Microsoft :: Windows",
+    "Operating System :: MacOS",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Topic :: Security",
+    "Topic :: System :: Networking :: Firewalls",
+]
+keywords = [
+    "cybersecurity",
+    "threat-intelligence",
+    "firewall",
+    "nftables",
+    "fail2ban",
+    "botnet-defense",
+    "tor-detection",
+    "radix-trie",
+]
+dependencies = []
+
+[project.optional-dependencies]
+ui = [
+    "rich>=13.0.0",
+]
+dev = [
+    "pytest>=8.0.0",
+    "rich>=13.0.0",
+]
+
+[project.scripts]
+blackice = "blackice.cli:main"
+
+[project.urls]
+Homepage = "https://github.com/iriss-dev/blackice"
+Documentation = "https://github.com/iriss-dev/blackice#readme"
+Repository = "https://github.com/iriss-dev/blackice.git"
+"Bug Tracker" = "https://github.com/iriss-dev/blackice/issues"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["blackice*"]
+
+[tool.setuptools.package-data]
+blackice = ["ui/cockpit.html"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]

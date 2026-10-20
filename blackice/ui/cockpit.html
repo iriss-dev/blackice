@@ -1,0 +1,754 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BLACKICE // Sentinel Cockpit</title>
+  <style>
+    :root {
+      --bg: #07080c;
+      --panel: #0d0f17;
+      --panel-border: #1a1e2d;
+      --panel-hover: #131724;
+      --cyan: #00f0ff;
+      --cyan-glow: rgba(0, 240, 255, 0.18);
+      --crimson: #ff0055;
+      --crimson-glow: rgba(255, 0, 85, 0.22);
+      --green: #00ff88;
+      --green-glow: rgba(0, 255, 136, 0.2);
+      --amber: #ffb700;
+      --text: #e1e7f0;
+      --text-muted: #6b768d;
+      --mono: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
+      --sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      font-family: var(--sans);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow-x: hidden;
+      background-image: 
+        radial-gradient(circle at 50% 0%, rgba(0, 240, 255, 0.04) 0%, transparent 60%),
+        linear-gradient(rgba(26, 30, 45, 0.15) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(26, 30, 45, 0.15) 1px, transparent 1px);
+      background-size: 100% 100%, 32px 32px, 32px 32px;
+    }
+
+    header {
+      padding: 18px 32px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--panel-border);
+      background: rgba(13, 15, 23, 0.85);
+      backdrop-filter: blur(12px);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .brand-logo {
+      width: 32px;
+      height: 32px;
+      border: 2px solid var(--cyan);
+      box-shadow: 0 0 12px var(--cyan-glow);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--mono);
+      font-weight: 900;
+      font-size: 14px;
+      color: var(--cyan);
+      background: rgba(0, 240, 255, 0.05);
+      clip-path: polygon(25% 0%, 100% 0%, 75% 100%, 0% 100%);
+    }
+
+    .brand-title {
+      font-family: var(--mono);
+      font-size: 18px;
+      font-weight: 800;
+      letter-spacing: 2px;
+      color: #fff;
+    }
+
+    .brand-title span { color: var(--cyan); }
+    .brand-badge {
+      font-size: 10px;
+      font-family: var(--mono);
+      padding: 2px 8px;
+      background: rgba(0, 255, 136, 0.1);
+      color: var(--green);
+      border: 1px solid rgba(0, 255, 136, 0.3);
+      border-radius: 2px;
+      letter-spacing: 1px;
+    }
+
+    .header-status {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      font-family: var(--mono);
+      font-size: 12px;
+    }
+
+    .pulse-dot {
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--green);
+      box-shadow: 0 0 8px var(--green);
+      animation: blink 2s infinite ease-in-out;
+    }
+
+    @keyframes blink {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.4; transform: scale(0.85); }
+    }
+
+    main {
+      padding: 28px 32px;
+      max-width: 1440px;
+      margin: 0 auto;
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+      flex: 1;
+    }
+
+    /* STATS CARDS */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 16px;
+    }
+
+    .stat-card {
+      background: var(--panel);
+      border: 1px solid var(--panel-border);
+      border-radius: 4px;
+      padding: 18px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .stat-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; width: 3px; height: 100%;
+      background: var(--cyan);
+    }
+    .stat-card.crimson::before { background: var(--crimson); }
+    .stat-card.green::before { background: var(--green); }
+    .stat-card.amber::before { background: var(--amber); }
+
+    .stat-label {
+      font-size: 11px;
+      font-family: var(--mono);
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: var(--text-muted);
+    }
+
+    .stat-value {
+      font-size: 26px;
+      font-family: var(--mono);
+      font-weight: 800;
+      color: #fff;
+    }
+
+    /* MAIN CONTENT 2-COL */
+    .content-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+    }
+
+    @media (max-width: 1000px) {
+      .content-grid { grid-template-columns: 1fr; }
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--panel-border);
+      border-radius: 4px;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .panel-header {
+      padding: 14px 20px;
+      border-bottom: 1px solid var(--panel-border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: rgba(255, 255, 255, 0.02);
+    }
+
+    .panel-title {
+      font-family: var(--mono);
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .panel-title span { color: var(--cyan); }
+
+    /* SEARCH / INSPECTOR */
+    .search-box {
+      padding: 20px;
+      display: flex;
+      gap: 12px;
+      border-bottom: 1px solid var(--panel-border);
+    }
+
+    .search-input {
+      flex: 1;
+      background: #06070a;
+      border: 1px solid var(--panel-border);
+      color: #fff;
+      font-family: var(--mono);
+      font-size: 14px;
+      padding: 10px 14px;
+      border-radius: 3px;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .search-input:focus {
+      border-color: var(--cyan);
+      box-shadow: 0 0 10px var(--cyan-glow);
+    }
+
+    .btn {
+      background: rgba(0, 240, 255, 0.1);
+      border: 1px solid var(--cyan);
+      color: var(--cyan);
+      font-family: var(--mono);
+      font-size: 12px;
+      font-weight: 700;
+      padding: 0 18px;
+      cursor: pointer;
+      border-radius: 3px;
+      transition: all 0.2s;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+
+    .btn:hover {
+      background: var(--cyan);
+      color: #000;
+      box-shadow: 0 0 14px var(--cyan-glow);
+    }
+
+    .btn-danger {
+      background: rgba(255, 0, 85, 0.1);
+      border-color: var(--crimson);
+      color: var(--crimson);
+    }
+
+    .btn-danger:hover {
+      background: var(--crimson);
+      color: #fff;
+      box-shadow: 0 0 14px var(--crimson-glow);
+    }
+
+    .btn-sm {
+      padding: 4px 10px;
+      font-size: 11px;
+    }
+
+    .verdict-card {
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .gauge-container {
+      display: flex;
+      align-items: center;
+      gap: 24px;
+      background: rgba(0, 0, 0, 0.2);
+      padding: 20px;
+      border-radius: 4px;
+      border: 1px solid var(--panel-border);
+    }
+
+    .score-circle {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      border: 4px solid var(--panel-border);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--mono);
+      position: relative;
+    }
+
+    .score-circle.clean { border-color: var(--green); color: var(--green); box-shadow: 0 0 16px var(--green-glow); }
+    .score-circle.threat { border-color: var(--crimson); color: var(--crimson); box-shadow: 0 0 16px var(--crimson-glow); }
+    .score-circle.suspicious { border-color: var(--amber); color: var(--amber); }
+
+    .score-val { font-size: 24px; font-weight: 900; }
+    .score-sub { font-size: 9px; opacity: 0.7; }
+
+    .verdict-details {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .verdict-ip {
+      font-family: var(--mono);
+      font-size: 18px;
+      font-weight: 700;
+      color: #fff;
+    }
+
+    .verdict-badges {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .badge {
+      font-size: 11px;
+      font-family: var(--mono);
+      padding: 2px 8px;
+      border-radius: 2px;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+    }
+
+    .badge-clean { background: rgba(0, 255, 136, 0.15); color: var(--green); border: 1px solid var(--green); }
+    .badge-drop { background: rgba(255, 0, 85, 0.15); color: var(--crimson); border: 1px solid var(--crimson); }
+    .badge-tor { background: rgba(180, 80, 255, 0.15); color: #c084fc; border: 1px solid #c084fc; }
+    .badge-botnet { background: rgba(255, 0, 85, 0.25); color: #fff; border: 1px solid var(--crimson); }
+
+    .feed-match-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .feed-match-item {
+      font-family: var(--mono);
+      font-size: 12px;
+      background: #07080c;
+      padding: 10px 14px;
+      border-left: 2px solid var(--cyan);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    /* TERMINAL LOG STREAM */
+    .terminal-body {
+      background: #040508;
+      padding: 16px;
+      font-family: var(--mono);
+      font-size: 12px;
+      line-height: 1.6;
+      height: 380px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column-reverse;
+      gap: 6px;
+    }
+
+    .log-line {
+      display: flex;
+      gap: 12px;
+      padding: 4px 6px;
+      border-radius: 2px;
+    }
+
+    .log-line:hover { background: rgba(255, 255, 255, 0.03); }
+    .log-time { color: var(--text-muted); min-width: 75px; }
+    .log-event { font-weight: 700; min-width: 110px; }
+    .log-event.BAN { color: var(--crimson); }
+    .log-event.DROP { color: var(--crimson); }
+    .log-event.INSPECT { color: var(--cyan); }
+    .log-event.CLEAN { color: var(--green); }
+    .log-ip { color: #fff; min-width: 130px; }
+    .log-msg { color: #8e99ac; flex: 1; }
+
+    /* BANS TABLE */
+    .bans-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-family: var(--mono);
+      font-size: 12px;
+      text-align: left;
+    }
+
+    .bans-table th {
+      padding: 12px 16px;
+      background: rgba(255, 255, 255, 0.02);
+      color: var(--text-muted);
+      border-bottom: 1px solid var(--panel-border);
+      font-weight: 600;
+      letter-spacing: 1px;
+    }
+
+    .bans-table td {
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--panel-border);
+    }
+
+    .bans-table tr:hover { background: var(--panel-hover); }
+
+    footer {
+      padding: 18px 32px;
+      border-top: 1px solid var(--panel-border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="brand">
+      <div class="brand-logo">BI</div>
+      <div class="brand-title">BLACK<span>ICE</span></div>
+      <div class="brand-badge">V1.0.0</div>
+    </div>
+    <div class="header-status">
+      <div><span class="pulse-dot"></span> SENTINEL ACTIVE</div>
+      <div id="driver-indicator" style="color: var(--cyan)">KERNEL: DETECTING...</div>
+    </div>
+  </header>
+
+  <main>
+    <!-- TOP TELEMETRY METRICS -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-label">Indexed Threat Ranges</div>
+        <div class="stat-value" id="stat-threats">--</div>
+      </div>
+      <div class="stat-card crimson">
+        <div class="stat-label">Active Kernel Bans</div>
+        <div class="stat-value" id="stat-bans">--</div>
+      </div>
+      <div class="stat-card green">
+        <div class="stat-label">Packets Intercepted</div>
+        <div class="stat-value" id="stat-packets">--</div>
+      </div>
+      <div class="stat-card amber">
+        <div class="stat-label">Engine Memory / Feeds</div>
+        <div class="stat-value" id="stat-feeds">--</div>
+      </div>
+    </div>
+
+    <!-- MAIN COCKPIT: INSPECTOR & LIVE STREAM -->
+    <div class="content-grid">
+      <!-- THREAT INSPECTOR -->
+      <div class="panel">
+        <div class="panel-header">
+          <div class="panel-title"><span>//</span> Threat Intelligence Inspector</div>
+          <div style="font-family: var(--mono); font-size: 11px; color: var(--text-muted)">Radix-Trie O(prefix)</div>
+        </div>
+
+        <div class="search-box">
+          <input type="text" id="ip-query" class="search-input" placeholder="Enter IP address (e.g. 185.220.101.5)" />
+          <button class="btn" onclick="inspectIP()">Query</button>
+        </div>
+
+        <div class="verdict-card" id="verdict-area">
+          <div class="gauge-container">
+            <div class="score-circle clean" id="gauge-circle">
+              <div class="score-val" id="gauge-val">0</div>
+              <div class="score-sub">RISK</div>
+            </div>
+            <div class="verdict-details">
+              <div class="verdict-ip" id="verdict-ip">Awaiting query...</div>
+              <div class="verdict-badges" id="verdict-badges">
+                <span class="badge badge-clean">STANDBY</span>
+              </div>
+            </div>
+            <div id="verdict-actions">
+              <!-- Dynamically rendered ban button -->
+            </div>
+          </div>
+
+          <div style="font-family: var(--mono); font-size: 12px; color: var(--text-muted); margin-top: 8px;">
+            MATCHED INTELLIGENCE FEEDS
+          </div>
+          <ul class="feed-match-list" id="match-list">
+            <li class="feed-match-item" style="color: var(--text-muted)">No query performed yet.</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- LIVE TELEMETRY TERMINAL -->
+      <div class="panel">
+        <div class="panel-header">
+          <div class="panel-title"><span>//</span> Ingress Telemetry Stream</div>
+          <div style="font-family: var(--mono); font-size: 11px; color: var(--green);">● SSE LIVE</div>
+        </div>
+        <div class="terminal-body" id="terminal-stream">
+          <div class="log-line">
+            <span class="log-time">[BOOT]</span>
+            <span class="log-event INSPECT">SYSTEM</span>
+            <span class="log-ip">127.0.0.1</span>
+            <span class="log-msg">BlackICE telemetry engine initialized and listening.</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ACTIVE BANS TABLE -->
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-title"><span>//</span> Active Kernel Blocklist (nftables / ipset)</div>
+        <button class="btn btn-sm btn-danger" onclick="promptManualBan()">+ Manual Ban</button>
+      </div>
+      <table class="bans-table">
+        <thead>
+          <tr>
+            <th>IP ADDRESS</th>
+            <th>REASON / THREAT TYPE</th>
+            <th>SCORE</th>
+            <th>DROPPED PKTS</th>
+            <th>EXPIRES IN</th>
+            <th>ACTION</th>
+          </tr>
+        </thead>
+        <tbody id="bans-tbody">
+          <tr>
+            <td colspan="6" style="text-align: center; color: var(--text-muted)">Loading active kernel rules...</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </main>
+
+  <footer>
+    <div>BLACKICE // Engineered by Iris (@iriss-dev) · GPL-3.0-or-later</div>
+    <div>Zero-Trust Autonomous Ingress Defense</div>
+  </footer>
+
+  <script>
+    async function fetchStats() {
+      try {
+        const res = await fetch('/v1/stats');
+        const data = await res.json();
+        document.getElementById('stat-threats').textContent = (data.indexed_threats || 0).toLocaleString();
+        document.getElementById('stat-bans').textContent = (data.active_bans || 0).toLocaleString();
+        document.getElementById('stat-packets').textContent = (data.total_packets_dropped || 0).toLocaleString();
+        const feedCount = Object.keys(data.feed_status || {}).length;
+        document.getElementById('stat-feeds').textContent = `${feedCount} Feeds OK`;
+        document.getElementById('driver-indicator').textContent = `DRIVER: ${data.driver?.toUpperCase() || 'MOCK'}`;
+      } catch (err) {
+        console.error("Failed to load stats", err);
+      }
+    }
+
+    async function inspectIP(targetIP) {
+      const ip = (targetIP || document.getElementById('ip-query').value).trim();
+      if (!ip) return;
+      document.getElementById('ip-query').value = ip;
+
+      try {
+        const res = await fetch(`/v1/intel/${encodeURIComponent(ip)}`);
+        const data = await res.json();
+        renderVerdict(data);
+      } catch (err) {
+        alert("Failed to query IP: " + err);
+      }
+    }
+
+    function renderVerdict(data) {
+      const circle = document.getElementById('gauge-circle');
+      const val = document.getElementById('gauge-val');
+      const ipEl = document.getElementById('verdict-ip');
+      const badges = document.getElementById('verdict-badges');
+      const actions = document.getElementById('verdict-actions');
+      const matchList = document.getElementById('match-list');
+
+      val.textContent = data.threat_score;
+      ipEl.textContent = data.ip;
+
+      circle.className = 'score-circle ' + (data.threat_score >= 75 ? 'threat' : data.threat_score >= 40 ? 'suspicious' : 'clean');
+
+      badges.innerHTML = '';
+      const actionBadge = document.createElement('span');
+      actionBadge.className = 'badge ' + (data.action === 'DROP' ? 'badge-drop' : 'badge-clean');
+      actionBadge.textContent = data.action;
+      badges.appendChild(actionBadge);
+
+      const classBadge = document.createElement('span');
+      classBadge.className = 'badge ' + (data.classification === 'TOR_EXIT' ? 'badge-tor' : data.threat_score >= 75 ? 'badge-botnet' : 'badge-clean');
+      classBadge.textContent = data.classification;
+      badges.appendChild(classBadge);
+
+      if (data.is_banned) {
+        const bannedBadge = document.createElement('span');
+        bannedBadge.className = 'badge badge-drop';
+        bannedBadge.textContent = 'KERNEL BANNED';
+        badges.appendChild(bannedBadge);
+        actions.innerHTML = `<button class="btn btn-sm btn-danger" onclick="unbanIP('${data.ip}')">Unban IP</button>`;
+      } else {
+        actions.innerHTML = `<button class="btn btn-sm" onclick="banIP('${data.ip}', 'Manual cockpit ban')">Ban IP</button>`;
+      }
+
+      matchList.innerHTML = '';
+      if (data.matched_feeds && data.matched_feeds.length > 0) {
+        data.matched_feeds.forEach(f => {
+          const li = document.createElement('li');
+          li.className = 'feed-match-item';
+          li.innerHTML = `<span><b>${f}</b></span> <span style="color: var(--cyan)">MATCH</span>`;
+          matchList.appendChild(li);
+        });
+      } else {
+        matchList.innerHTML = '<li class="feed-match-item" style="color: var(--green)">No malicious feed matches. IP is clean.</li>';
+      }
+    }
+
+    async function loadBans() {
+      try {
+        const res = await fetch('/v1/firewall/bans');
+        const bans = await res.json();
+        const tbody = document.getElementById('bans-tbody');
+        tbody.innerHTML = '';
+
+        if (!bans || bans.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: var(--text-muted)">No active bans in kernel firewall.</td></tr>';
+          return;
+        }
+
+        const now = Date.now() / 1000;
+        bans.forEach(b => {
+          const remaining = Math.max(0, Math.floor(b.expires_at - now));
+          const hours = Math.floor(remaining / 3600);
+          const mins = Math.floor((remaining % 3600) / 60);
+
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+            <td style="color: #fff; font-weight: 700;">${b.ip}</td>
+            <td style="color: var(--cyan)">${b.reason}</td>
+            <td><span class="badge ${b.threat_score >= 75 ? 'badge-drop' : 'badge-clean'}">${b.threat_score}</span></td>
+            <td>${b.packets_dropped || 0}</td>
+            <td style="color: var(--text-muted)">${hours}h ${mins}m</td>
+            <td><button class="btn btn-sm btn-danger" onclick="unbanIP('${b.ip}')">Unban</button></td>
+          `;
+          tbody.appendChild(tr);
+        });
+      } catch (err) {
+        console.error("Failed to load bans", err);
+      }
+    }
+
+    async function banIP(ip, reason) {
+      try {
+        const res = await fetch('/v1/firewall/ban', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ip, reason: reason || 'Manual ban', ttl_seconds: 86400 })
+        });
+        const data = await res.json();
+        if (data.success) {
+          inspectIP(ip);
+          loadBans();
+          fetchStats();
+        }
+      } catch (err) {
+        alert("Ban failed: " + err);
+      }
+    }
+
+    async function unbanIP(ip) {
+      try {
+        const res = await fetch('/v1/firewall/unban', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ip })
+        });
+        const data = await res.json();
+        if (data.success) {
+          inspectIP(ip);
+          loadBans();
+          fetchStats();
+        }
+      } catch (err) {
+        alert("Unban failed: " + err);
+      }
+    }
+
+    function promptManualBan() {
+      const ip = prompt("Enter IP to ban:");
+      if (!ip) return;
+      const reason = prompt("Enter reason for ban:", "Manual operator quarantine") || "Manual quarantine";
+      banIP(ip, reason);
+    }
+
+    // Connect Server-Sent Events (SSE) for real-time telemetry stream
+    function initEventStream() {
+      const evtSource = new EventSource('/v1/stream');
+      const terminal = document.getElementById('terminal-stream');
+
+      evtSource.onmessage = function(e) {
+        try {
+          const item = JSON.parse(e.data);
+          const line = document.createElement('div');
+          line.className = 'log-line';
+          const timeStr = new Date(item.timestamp * 1000).toLocaleTimeString();
+          line.innerHTML = `
+            <span class="log-time">[${timeStr}]</span>
+            <span class="log-event ${item.event_type}">${item.event_type}</span>
+            <span class="log-ip">${item.ip}</span>
+            <span class="log-msg">${item.message || JSON.stringify(item.details || {})}</span>
+          `;
+          terminal.prepend(line);
+          // Keep terminal capped at 100 items
+          if (terminal.children.length > 100) {
+            terminal.removeChild(terminal.lastChild);
+          }
+        } catch (err) {
+          console.error(err);
+        }
+      };
+    }
+
+    document.getElementById('ip-query').addEventListener('keypress', function(e) {
+      if (e.key === 'Enter') inspectIP();
+    });
+
+    // Initial load
+    fetchStats();
+    loadBans();
+    initEventStream();
+    setInterval(fetchStats, 5000);
+    setInterval(loadBans, 10000);
+  </script>
+</body>
+</html>

@@ -1,0 +1,29 @@
+[Unit]
+Description=BlackICE // Autonomous Ingress Defense & Threat Intelligence Sentinel
+Documentation=https://github.com/iriss-dev/blackice
+After=network.target network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/var/lib/blackice
+ExecStart=/usr/local/bin/blackice daemon --host 127.0.0.1 --port 8787
+Restart=always
+RestartSec=5s
+
+# Hardening & Sandboxing
+CapabilityBoundingSet=CAP_NET_ADMIN CAP_NET_RAW
+AmbientCapabilities=CAP_NET_ADMIN CAP_NET_RAW
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+ProtectKernelTunables=true
+ProtectControlGroups=true
+RestrictRealtime=true
+MemoryDenyWriteExecute=true
+ReadWritePaths=/var/lib/blackice
+
+[Install]
+WantedBy=multi-user.target
